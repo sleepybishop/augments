@@ -5,6 +5,7 @@
 #include "src/max_subarray.h"
 #include "src/order_statistic.h"
 #include "src/priority_search.h"
+#include "src/range_min.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -23,11 +24,13 @@ int main(int argc, char *argv[])
     sub_tree subt;
     os_tree ost;
     ps_tree pst;
+    min_tree mt;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
     os_tree_init(&ost);
     ps_tree_init(&pst);
+    min_tree_init(&mt);
 
     char buf[4096];
 
@@ -89,6 +92,36 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 4. Range Minimum Tree Commands */
+        else if (strncmp(buf, "MINTREE ADD ", 12) == 0) {
+            int key;
+            double val;
+            if (sscanf(buf + 12, "%d|%lf", &key, &val) == 2) {
+                min_tree_add(&mt, key, val);
+            }
+        } else if (strncmp(buf, "MINTREE REMOVE ", 15) == 0) {
+            int key;
+            if (sscanf(buf + 15, "%d", &key) == 1) {
+                min_tree_remove(&mt, key);
+            }
+        } else if (strncmp(buf, "MINTREE UPDATE ", 15) == 0) {
+            int key;
+            double val;
+            if (sscanf(buf + 15, "%d|%lf", &key, &val) == 2) {
+                min_tree_update(&mt, key, val);
+            }
+        } else if (strncmp(buf, "MINTREE QUERY ", 14) == 0) {
+            int low, high;
+            if (sscanf(buf + 14, "%d|%d", &low, &high) == 2) {
+                double res = min_tree_query(&mt, low, high);
+                if (res == (1.0 / 0.0)) {
+                    printf("INFINITY\n");
+                } else {
+                    printf("%.2f\n", res);
+                }
+            }
+        }
+
         /* 5. Priority Search Tree Commands */
         else if (strncmp(buf, "PSTREE ADD ", 11) == 0) {
             double x, y;
@@ -142,6 +175,8 @@ int main(int argc, char *argv[])
             euler_tour_graph(&ett, NULL);
         } else if (strcmp(buf, "OSTREE GRAPH") == 0) {
             os_tree_graph(&ost, NULL);
+        } else if (strcmp(buf, "MINTREE GRAPH") == 0) {
+            min_tree_graph(&mt, NULL);
         } else if (strcmp(buf, "PSTREE GRAPH") == 0) {
             ps_tree_graph(&pst, NULL);
         } else if (strcmp(buf, "MAXSUB GRAPH") == 0) {
@@ -155,6 +190,7 @@ int main(int argc, char *argv[])
     sub_tree_destroy(&subt);
     os_tree_destroy(&ost);
     ps_tree_destroy(&pst);
+    min_tree_destroy(&mt);
 
     return 0;
 }
