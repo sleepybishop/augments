@@ -8,6 +8,7 @@
 #include "src/range_min.h"
 #include "src/range_sum.h"
 #include "src/hash_tree.h"
+#include "src/lcp_tree.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
     min_tree mt;
     sum_tree st;
     hash_tree_tree ht;
+    lcp_tree lcpt;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -37,6 +39,7 @@ int main(int argc, char *argv[])
     min_tree_init(&mt);
     sum_tree_init(&st);
     hash_tree_init(&ht);
+    lcp_tree_init(&lcpt);
 
     char buf[4096];
 
@@ -212,6 +215,15 @@ int main(int argc, char *argv[])
             printf("%llu\n", (unsigned long long)hash_tree_hash(&ht));
         }
 
+        /* 8. LCP Commands */
+        else if (strncmp(buf, "LCP ADD ", 8) == 0) {
+            lcp_tree_add(&lcpt, buf + 8);
+        } else if (strncmp(buf, "LCP REMOVE ", 11) == 0) {
+            lcp_tree_remove(&lcpt, buf + 11);
+        } else if (strcmp(buf, "LCP QUERY") == 0) {
+            printf("%zu\n", lcp_tree_query(&lcpt));
+        }
+
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
         } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
@@ -232,6 +244,8 @@ int main(int argc, char *argv[])
             sub_tree_graph(&subt, NULL);
         } else if (strcmp(buf, "HASHTREE GRAPH") == 0) {
             hash_tree_graph(&ht, NULL);
+        } else if (strcmp(buf, "LCP GRAPH") == 0) {
+            lcp_tree_graph(&lcpt, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
             printf("%s\n", buf + 5);
         }
@@ -244,6 +258,7 @@ int main(int argc, char *argv[])
     min_tree_destroy(&mt);
     sum_tree_destroy(&st);
     hash_tree_destroy(&ht);
+    lcp_tree_destroy(&lcpt);
 
     return 0;
 }

@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **7 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **8 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 
 Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation complexity by computing subtree-local properties on the fly.
@@ -30,6 +30,7 @@ Below is a map of the base tree templates in the library and the modules derived
 *   **[Priority Search Tree](file:///home/joe/src/sleepybishop/augments/src/priority_search.h)** (`PSTREE`): Stores 2D points (x, y) ordered by x (as BST key) and augments each node with the maximum y in its subtree, enabling 3-sided range queries.
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 *   **[Hash Tree](file:///home/joe/src/sleepybishop/augments/src/hash_tree.h)** (`HASHTREE`): Augments the tree with a rolling hash of the sequence to support fast substring equality checks.
+*   **[LCP Tree](file:///home/joe/src/sleepybishop/augments/src/lcp_tree.h)** (`LCPTREE`): Augments the tree with a longest common prefix of string keys, enabling optimal prefix searches.
 
 ---
 
@@ -166,6 +167,21 @@ Augments the tree with a rolling hash of the sequence to support fast substring 
     *   `void hash_tree_graph(hash_tree_tree *tree, FILE *stream)`
 
 ![Hash Tree](images/hash_tree.png)
+
+---
+
+### 8. LCP Tree (`LCPTREE`)
+Augments the tree with a longest common prefix of string keys, enabling optimal prefix searches.
+
+*   **Header**: [src/lcp_tree.h](file:///home/joe/src/sleepybishop/augments/src/lcp_tree.h)
+*   **Implementation**: [src/lcp_tree.c](file:///home/joe/src/sleepybishop/augments/src/lcp_tree.c)
+*   **Key API**:
+    *   `void lcp_tree_init(lcp_tree *tree, tree_allocator *alloc)`
+    *   `int lcp_tree_add(lcp_tree *tree, const char *str)`
+    *   `int lcp_tree_remove(lcp_tree *tree, const char *str)`
+    *   `void lcp_tree_graph(lcp_tree *tree, FILE *stream)`
+
+![LCP Tree](images/lcp_tree.png)
 
 ---
 

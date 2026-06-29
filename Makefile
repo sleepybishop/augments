@@ -4,7 +4,8 @@ OBJ=src/interval_tree.o \
     src/priority_search.o \
     src/range_min.o \
     src/range_sum.o \
-    src/hash_tree.o
+    src/hash_tree.o \
+    src/lcp_tree.o
 
 
 CFLAGS   = -O2 -g -std=c11 -Wall -I.
@@ -29,6 +30,7 @@ images: t/util/test_helper
 	(echo "MINTREE ADD 1|10.0"; echo "MINTREE ADD 2|5.0"; echo "MINTREE ADD 3|15.0"; echo "MINTREE ADD 4|3.0"; echo "MINTREE ADD 5|8.0"; echo "MINTREE ADD 6|12.0"; echo "MINTREE ADD 7|1.0"; echo "MINTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/range_min.png
 	(echo "SUMTREE ADD 1|10.0"; echo "SUMTREE ADD 2|5.0"; echo "SUMTREE ADD 3|15.0"; echo "SUMTREE ADD 4|3.0"; echo "SUMTREE ADD 5|8.0"; echo "SUMTREE ADD 6|12.0"; echo "SUMTREE ADD 7|1.0"; echo "SUMTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/range_sum.png
 	(echo "HASHTREE ADD 1|a"; echo "HASHTREE ADD 2|b"; echo "HASHTREE ADD 3|c"; echo "HASHTREE ADD 4|d"; echo "HASHTREE ADD 5|e"; echo "HASHTREE ADD 6|f"; echo "HASHTREE ADD 7|g"; echo "HASHTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/hash_tree.png
+	(echo "LCP ADD apple"; echo "LCP ADD application"; echo "LCP ADD banana"; echo "LCP ADD band"; echo "LCP ADD bandit"; echo "LCP ADD cat"; echo "LCP dog"; echo "LCP GRAPH") | ./t/util/test_helper | dot -Tpng -o images/lcp_tree.png
 
 clean:
 	$(RM) src/*.o t/util/*.o *.o main test_helper
