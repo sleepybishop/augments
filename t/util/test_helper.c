@@ -12,6 +12,7 @@
 #include "src/rope.h"
 #include "src/euler_tour.h"
 #include "src/incremental_hull.h"
+#include "src/dynamic_hull.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
     rope tropt;
     euler_tour ett;
     inc_hull_tree iht;
+    dyn_hull_tree dht;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -49,6 +51,7 @@ int main(int argc, char *argv[])
     rope_init(&tropt);
     euler_tour_init(&ett, 1000);
     inc_hull_init(&iht);
+    dyn_hull_init(&dht);
 
     char buf[4096];
 
@@ -289,6 +292,21 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 12. Dynamic Hull Commands */
+        else if (strncmp(buf, "DYNHULL ADD ", 12) == 0) {
+            double x, y;
+            if (sscanf(buf + 12, "%lf %lf", &x, &y) == 2) {
+                dyn_hull_insert(&dht, x, y);
+            }
+        } else if (strncmp(buf, "DYNHULL REMOVE ", 15) == 0) {
+            double x, y;
+            if (sscanf(buf + 15, "%lf %lf", &x, &y) == 2) {
+                dyn_hull_remove(&dht, x, y);
+            }
+        } else if (strcmp(buf, "DYNHULL QUERY") == 0) {
+            dyn_hull_query(&dht, stdout);
+        }
+
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
         } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
@@ -329,6 +347,7 @@ int main(int argc, char *argv[])
     rope_destroy(&tropt);
     euler_tour_destroy(&ett);
     inc_hull_destroy(&iht);
+    dyn_hull_destroy(&dht);
 
     return 0;
 }

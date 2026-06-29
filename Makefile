@@ -8,7 +8,8 @@ OBJ=src/interval_tree.o \
     src/lcp_tree.o \
     src/rope.o \
     src/euler_tour.o \
-    src/incremental_hull.o
+    src/incremental_hull.o \
+    src/dynamic_hull.o
 
 
 CFLAGS   = -O2 -g -std=c11 -Wall -I.
@@ -36,6 +37,7 @@ images: t/util/test_helper
 	(echo "LCP ADD apple"; echo "LCP ADD application"; echo "LCP ADD banana"; echo "LCP ADD band"; echo "LCP ADD bandit"; echo "LCP ADD cat"; echo "LCP dog"; echo "LCP GRAPH") | ./t/util/test_helper | dot -Tpng -o images/lcp_tree.png
 	(echo "ROPE ADD 0|a"; echo "ROPE ADD 1|b"; echo "ROPE ADD 2|c"; echo "ROPE ADD 3|d"; echo "ROPE ADD 4|e"; echo "ROPE ADD 5|f"; echo "ROPE ADD 6|g"; echo "ROPE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/rope.png
 	(echo "INCHULL ADD 10.0 0.0"; echo "INCHULL ADD 15.0 75.0"; echo "INCHULL ADD 18.0 96.0"; echo "INCHULL ADD 20.0 100.0"; echo "INCHULL ADD 22.0 96.0"; echo "INCHULL ADD 25.0 75.0"; echo "INCHULL ADD 30.0 0.0"; echo "INCHULL GRAPH") | ./t/util/test_helper | dot -Tpng -o images/incremental_hull.png
+	(echo "DYNHULL ADD 10.0 0.0"; echo "DYNHULL ADD 15.0 75.0"; echo "INCHULL ADD 18.0 96.0"; echo "DYNHULL ADD 20.0 100.0"; echo "DYNHULL ADD 22.0 96.0"; echo "DYNHULL ADD 25.0 75.0"; echo "DYNHULL ADD 30.0 0.0"; echo "DYNHULL GRAPH") | ./t/util/test_helper | dot -Tpng -o images/dynamic_hull.png
 	(echo "EULER LINK 0 1"; echo "EULER LINK 1 2"; echo "EULER LINK 2 3"; echo "EULER LINK 3 4"; echo "EULER LINK 4 5"; echo "EULER LINK 5 6"; echo "EULER GRAPH") | ./t/util/test_helper | dot -Tpng -o images/euler_tour.png
 
 clean:
