@@ -4,6 +4,7 @@
 #include "src/interval_tree.h"
 #include "src/max_subarray.h"
 #include "src/order_statistic.h"
+#include "src/priority_search.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -11,15 +12,22 @@ static int itree_print_cb(itree_node *node, void *arg)
     return 0;
 }
 
+static void ps_print_cb(ps_node *node, void *arg)
+{
+    printf("%.2f|%.2f\n", node->x, node->y);
+}
+
 int main(int argc, char *argv[])
 {
     itree it;
     sub_tree subt;
     os_tree ost;
+    ps_tree pst;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
     os_tree_init(&ost);
+    ps_tree_init(&pst);
 
     char buf[4096];
 
@@ -81,6 +89,24 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 5. Priority Search Tree Commands */
+        else if (strncmp(buf, "PSTREE ADD ", 11) == 0) {
+            double x, y;
+            if (sscanf(buf + 11, "%lf|%lf", &x, &y) == 2) {
+                ps_tree_add(&pst, x, y);
+            }
+        } else if (strncmp(buf, "PSTREE REMOVE ", 14) == 0) {
+            double x, y;
+            if (sscanf(buf + 14, "%lf|%lf", &x, &y) == 2) {
+                ps_tree_remove(&pst, x, y);
+            }
+        } else if (strncmp(buf, "PSTREE QUERY ", 13) == 0) {
+            double x_min, x_max, y_min;
+            if (sscanf(buf + 13, "%lf|%lf|%lf", &x_min, &x_max, &y_min) == 3) {
+                ps_tree_query(&pst, x_min, x_max, y_min, ps_print_cb, NULL);
+            }
+        }
+
         /* 6. Max Subarray Sum Tree Commands */
         else if (strncmp(buf, "MAXSUB ADD ", 11) == 0) {
             int key;
@@ -116,6 +142,8 @@ int main(int argc, char *argv[])
             euler_tour_graph(&ett, NULL);
         } else if (strcmp(buf, "OSTREE GRAPH") == 0) {
             os_tree_graph(&ost, NULL);
+        } else if (strcmp(buf, "PSTREE GRAPH") == 0) {
+            ps_tree_graph(&pst, NULL);
         } else if (strcmp(buf, "MAXSUB GRAPH") == 0) {
             sub_tree_graph(&subt, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
@@ -126,6 +154,7 @@ int main(int argc, char *argv[])
     interval_tree_destroy(&it);
     sub_tree_destroy(&subt);
     os_tree_destroy(&ost);
+    ps_tree_destroy(&pst);
 
     return 0;
 }
