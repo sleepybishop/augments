@@ -28,6 +28,6 @@ int main(int argc, char *argv[])
     intervaltree_graph(&it, NULL);
 
     size_t start = 0, end = 0;
-    //intervaltree_find(&it, start, end);
+    // intervaltree_find(&it, start, end);
     intervaltree_destroy(&it);
 }

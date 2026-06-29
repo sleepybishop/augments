@@ -4,3 +4,5 @@ main
 *.svg
 *.txt
 *.swp
+t/util/test_helper
+images/
