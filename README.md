@@ -4,6 +4,7 @@
 
 A modular C library implementing **8 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
+2. **Treaps ([src/treap.h](file:///home/joe/src/sleepybishop/augments/src/treap.h))**: BSD-style randomized binary search tree template supporting split and merge.
 
 Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation complexity by computing subtree-local properties on the fly.
 
