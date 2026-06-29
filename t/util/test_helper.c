@@ -6,6 +6,7 @@
 #include "src/order_statistic.h"
 #include "src/priority_search.h"
 #include "src/range_min.h"
+#include "src/range_sum.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -25,12 +26,14 @@ int main(int argc, char *argv[])
     os_tree ost;
     ps_tree pst;
     min_tree mt;
+    sum_tree st;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
     os_tree_init(&ost);
     ps_tree_init(&pst);
     min_tree_init(&mt);
+    sum_tree_init(&st);
 
     char buf[4096];
 
@@ -89,6 +92,31 @@ int main(int argc, char *argv[])
                 } else {
                     printf("%zu\n", r);
                 }
+            }
+        }
+
+        /* 3. Range Sum Tree Commands */
+        else if (strncmp(buf, "SUMTREE ADD ", 12) == 0) {
+            int key;
+            double val;
+            if (sscanf(buf + 12, "%d|%lf", &key, &val) == 2) {
+                sum_tree_add(&st, key, val);
+            }
+        } else if (strncmp(buf, "SUMTREE REMOVE ", 15) == 0) {
+            int key;
+            if (sscanf(buf + 15, "%d", &key) == 1) {
+                sum_tree_remove(&st, key);
+            }
+        } else if (strncmp(buf, "SUMTREE UPDATE ", 15) == 0) {
+            int key;
+            double val;
+            if (sscanf(buf + 15, "%d|%lf", &key, &val) == 2) {
+                sum_tree_update(&st, key, val);
+            }
+        } else if (strncmp(buf, "SUMTREE QUERY ", 14) == 0) {
+            int low, high;
+            if (sscanf(buf + 14, "%d|%d", &low, &high) == 2) {
+                printf("%.2f\n", sum_tree_query(&st, low, high));
             }
         }
 
@@ -175,6 +203,8 @@ int main(int argc, char *argv[])
             euler_tour_graph(&ett, NULL);
         } else if (strcmp(buf, "OSTREE GRAPH") == 0) {
             os_tree_graph(&ost, NULL);
+        } else if (strcmp(buf, "SUMTREE GRAPH") == 0) {
+            sum_tree_graph(&st, NULL);
         } else if (strcmp(buf, "MINTREE GRAPH") == 0) {
             min_tree_graph(&mt, NULL);
         } else if (strcmp(buf, "PSTREE GRAPH") == 0) {
@@ -191,6 +221,7 @@ int main(int argc, char *argv[])
     os_tree_destroy(&ost);
     ps_tree_destroy(&pst);
     min_tree_destroy(&mt);
+    sum_tree_destroy(&st);
 
     return 0;
 }

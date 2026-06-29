@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **5 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **6 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 
 Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation complexity by computing subtree-local properties on the fly.
@@ -25,6 +25,7 @@ Below is a map of the base tree templates in the library and the modules derived
 
 *   **[Interval Tree](file:///home/joe/src/sleepybishop/augments/src/interval_tree.h)** (`ITREE`): Augments the tree with a `max` field representing the maximum high endpoint in the subtree, enabling optimal range overlap and containment searches.
 *   **[Order-Statistic Tree](file:///home/joe/src/sleepybishop/augments/src/order_statistic.h)** (`OSTREE`): Augments the tree with a `size` field representing the number of nodes in the subtree, enabling rank and selection queries.
+*   **[Range Sum Tree](file:///home/joe/src/sleepybishop/augments/src/range_sum.h)** (`SUMTREE`): Augments the tree with a `sum` field representing the sum of node values in the subtree, enabling dynamic prefix and range sum queries.
 *   **[Range Minimum Tree](file:///home/joe/src/sleepybishop/augments/src/range_min.h)** (`MINTREE`): Augments the tree with a `min_val` field representing the minimum value in the subtree, enabling dynamic range minimum queries (RMQ).
 *   **[Priority Search Tree](file:///home/joe/src/sleepybishop/augments/src/priority_search.h)** (`PSTREE`): Stores 2D points (x, y) ordered by x (as BST key) and augments each node with the maximum y in its subtree, enabling 3-sided range queries.
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
@@ -85,7 +86,24 @@ Augments the tree with a `size` field representing the number of nodes in the su
 
 ---
 
-### 3. Range Minimum Tree (`MINTREE`)
+### 3. Range Sum Tree (`SUMTREE`)
+Augments the tree with a `sum` field representing the sum of node values in the subtree, enabling dynamic prefix and range sum queries.
+
+*   **Header**: [src/range_sum.h](file:///home/joe/src/sleepybishop/augments/src/range_sum.h)
+*   **Implementation**: [src/range_sum.c](file:///home/joe/src/sleepybishop/augments/src/range_sum.c)
+*   **Key API**:
+    *   `void sum_tree_init(sum_tree *tree, tree_allocator *alloc)`
+    *   `int sum_tree_add(sum_tree *tree, int key, double val)`
+    *   `int sum_tree_remove(sum_tree *tree, int key)`
+    *   `void sum_tree_update(sum_tree *tree, int key, double new_val)`
+    *   `double sum_tree_query(sum_tree *tree, int low_key, int high_key)`
+    *   `void sum_tree_graph(sum_tree *tree, FILE *stream)`
+
+![Range Sum Tree](images/range_sum.png)
+
+---
+
+### 4. Range Minimum Tree (`MINTREE`)
 Augments the tree with a `min_val` field representing the minimum value in the subtree, enabling dynamic range minimum queries (RMQ).
 
 *   **Header**: [src/range_min.h](file:///home/joe/src/sleepybishop/augments/src/range_min.h)
@@ -102,7 +120,7 @@ Augments the tree with a `min_val` field representing the minimum value in the s
 
 ---
 
-### 4. Priority Search Tree (`PSTREE`)
+### 5. Priority Search Tree (`PSTREE`)
 Stores 2D points (x, y) ordered by x (as BST key) and augments each node with the maximum y in its subtree, enabling 3-sided range queries.
 
 *   **Header**: [src/priority_search.h](file:///home/joe/src/sleepybishop/augments/src/priority_search.h)
@@ -118,7 +136,7 @@ Stores 2D points (x, y) ordered by x (as BST key) and augments each node with th
 
 ---
 
-### 5. Max Subarray Sum Tree (`MAXSUB`)
+### 6. Max Subarray Sum Tree (`MAXSUB`)
 Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 
 *   **Header**: [src/max_subarray.h](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)

@@ -2,7 +2,8 @@ OBJ=src/interval_tree.o \
     src/max_subarray.o \
     src/order_statistic.o \
     src/priority_search.o \
-    src/range_min.o
+    src/range_min.o \
+    src/range_sum.o
 
 
 CFLAGS   = -O2 -g -std=c11 -Wall -I.
@@ -25,6 +26,7 @@ images: t/util/test_helper
 	(echo "OSTREE ADD 10"; echo "OSTREE ADD 20"; echo "OSTREE ADD 30"; echo "OSTREE ADD 40"; echo "OSTREE ADD 50"; echo "OSTREE ADD 60"; echo "OSTREE ADD 70"; echo "OSTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/order_statistic.png
 	(echo "PSTREE ADD 10|20"; echo "PSTREE ADD 15|25"; echo "PSTREE ADD 5|15"; echo "PSTREE ADD 25|30"; echo "PSTREE ADD 20|10"; echo "PSTREE ADD 8|12"; echo "PSTREE ADD 30|5"; echo "PSTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/priority_search.png
 	(echo "MINTREE ADD 1|10.0"; echo "MINTREE ADD 2|5.0"; echo "MINTREE ADD 3|15.0"; echo "MINTREE ADD 4|3.0"; echo "MINTREE ADD 5|8.0"; echo "MINTREE ADD 6|12.0"; echo "MINTREE ADD 7|1.0"; echo "MINTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/range_min.png
+	(echo "SUMTREE ADD 1|10.0"; echo "SUMTREE ADD 2|5.0"; echo "SUMTREE ADD 3|15.0"; echo "SUMTREE ADD 4|3.0"; echo "SUMTREE ADD 5|8.0"; echo "SUMTREE ADD 6|12.0"; echo "SUMTREE ADD 7|1.0"; echo "SUMTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/range_sum.png
 
 clean:
 	$(RM) src/*.o t/util/*.o *.o main test_helper
