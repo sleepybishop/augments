@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **6 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **7 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 
 Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation complexity by computing subtree-local properties on the fly.
@@ -29,6 +29,7 @@ Below is a map of the base tree templates in the library and the modules derived
 *   **[Range Minimum Tree](file:///home/joe/src/sleepybishop/augments/src/range_min.h)** (`MINTREE`): Augments the tree with a `min_val` field representing the minimum value in the subtree, enabling dynamic range minimum queries (RMQ).
 *   **[Priority Search Tree](file:///home/joe/src/sleepybishop/augments/src/priority_search.h)** (`PSTREE`): Stores 2D points (x, y) ordered by x (as BST key) and augments each node with the maximum y in its subtree, enabling 3-sided range queries.
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
+*   **[Hash Tree](file:///home/joe/src/sleepybishop/augments/src/hash_tree.h)** (`HASHTREE`): Augments the tree with a rolling hash of the sequence to support fast substring equality checks.
 
 ---
 
@@ -150,6 +151,21 @@ Stores a sequence of values and augments each node with subtree-level sum, max_p
     *   `void sub_tree_graph(sub_tree *tree, FILE *stream)`
 
 ![Max Subarray Sum Tree](images/max_subarray.png)
+
+---
+
+### 7. Hash Tree (`HASHTREE`)
+Augments the tree with a rolling hash of the sequence to support fast substring equality checks.
+
+*   **Header**: [src/hash_tree.h](file:///home/joe/src/sleepybishop/augments/src/hash_tree.h)
+*   **Implementation**: [src/hash_tree.c](file:///home/joe/src/sleepybishop/augments/src/hash_tree.c)
+*   **Key API**:
+    *   `void hash_tree_init(hash_tree_tree *tree, tree_allocator *alloc)`
+    *   `int hash_tree_add(hash_tree_tree *tree, size_t key, char val)`
+    *   `int hash_tree_remove(hash_tree_tree *tree, size_t key)`
+    *   `void hash_tree_graph(hash_tree_tree *tree, FILE *stream)`
+
+![Hash Tree](images/hash_tree.png)
 
 ---
 

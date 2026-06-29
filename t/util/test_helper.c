@@ -7,6 +7,7 @@
 #include "src/priority_search.h"
 #include "src/range_min.h"
 #include "src/range_sum.h"
+#include "src/hash_tree.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -27,6 +28,7 @@ int main(int argc, char *argv[])
     ps_tree pst;
     min_tree mt;
     sum_tree st;
+    hash_tree_tree ht;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -34,6 +36,7 @@ int main(int argc, char *argv[])
     ps_tree_init(&pst);
     min_tree_init(&mt);
     sum_tree_init(&st);
+    hash_tree_init(&ht);
 
     char buf[4096];
 
@@ -193,6 +196,22 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 7. hash_tree Commands */
+        else if (strncmp(buf, "HASHTREE ADD ", 13) == 0) {
+            size_t key;
+            char val;
+            if (sscanf(buf + 13, "%zu|%c", &key, &val) == 2) {
+                hash_tree_insert(&ht, key, val);
+            }
+        } else if (strncmp(buf, "HASHTREE REMOVE ", 16) == 0) {
+            size_t key;
+            if (sscanf(buf + 16, "%zu", &key) == 1) {
+                hash_tree_remove(&ht, key);
+            }
+        } else if (strcmp(buf, "HASHTREE HASH") == 0) {
+            printf("%llu\n", (unsigned long long)hash_tree_hash(&ht));
+        }
+
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
         } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
@@ -211,6 +230,8 @@ int main(int argc, char *argv[])
             ps_tree_graph(&pst, NULL);
         } else if (strcmp(buf, "MAXSUB GRAPH") == 0) {
             sub_tree_graph(&subt, NULL);
+        } else if (strcmp(buf, "HASHTREE GRAPH") == 0) {
+            hash_tree_graph(&ht, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
             printf("%s\n", buf + 5);
         }
@@ -222,6 +243,7 @@ int main(int argc, char *argv[])
     ps_tree_destroy(&pst);
     min_tree_destroy(&mt);
     sum_tree_destroy(&st);
+    hash_tree_destroy(&ht);
 
     return 0;
 }
