@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **10 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **11 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 2. **Treaps ([src/treap.h](file:///home/joe/src/sleepybishop/augments/src/treap.h))**: BSD-style randomized binary search tree template supporting split and merge.
 
@@ -32,6 +32,7 @@ Below is a map of the base tree templates in the library and the modules derived
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 *   **[Hash Tree](file:///home/joe/src/sleepybishop/augments/src/hash_tree.h)** (`HASHTREE`): Augments the tree with a rolling hash of the sequence to support fast substring equality checks.
 *   **[LCP Tree](file:///home/joe/src/sleepybishop/augments/src/lcp_tree.h)** (`LCPTREE`): Augments the tree with a longest common prefix of string keys, enabling optimal prefix searches.
+*   **[Incremental Convex Hull](file:///home/joe/src/sleepybishop/augments/src/incremental_hull.h)** (`INCHULL`): Maintains the upper boundary of a 2D convex hull dynamically by adding points in left-to-right order.
 
 ### 2. Base Treap Template (`treap.h`)
 
@@ -191,7 +192,22 @@ Augments the tree with a longest common prefix of string keys, enabling optimal 
 
 ---
 
-### 9. Rope (`ROPE`)
+### 9. Incremental Convex Hull (`INCHULL`)
+Maintains the upper boundary of a 2D convex hull dynamically by adding points in left-to-right order.
+
+*   **Header**: [src/incremental_hull.h](file:///home/joe/src/sleepybishop/augments/src/incremental_hull.h)
+*   **Implementation**: [src/incremental_hull.c](file:///home/joe/src/sleepybishop/augments/src/incremental_hull.c)
+*   **Key API**:
+    *   `void inc_hull_init(inc_hull_tree *tree, tree_allocator *alloc)`
+    *   `void inc_hull_insert(inc_hull_tree *tree, double x, double y)`
+    *   `void inc_hull_destroy(inc_hull_tree *tree)`
+    *   `void inc_hull_graph(inc_hull_tree *tree, FILE *stream)`
+
+![Incremental Convex Hull](images/incremental_hull.png)
+
+---
+
+### 10. Rope (`ROPE`)
 Augments a Treap with subtree sizes to support character sequences and fast split/merge indexing.
 
 *   **Header**: [src/rope.h](file:///home/joe/src/sleepybishop/augments/src/rope.h)
@@ -207,7 +223,7 @@ Augments a Treap with subtree sizes to support character sequences and fast spli
 
 ---
 
-### 10. Euler Tour Tree (`EULER`)
+### 11. Euler Tour Tree (`EULER`)
 Augments a Treap to represent forest structures via Euler tours, supporting dynamic link, cut, and connectivity queries.
 
 *   **Header**: [src/euler_tour.h](file:///home/joe/src/sleepybishop/augments/src/euler_tour.h)

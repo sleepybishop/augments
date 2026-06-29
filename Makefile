@@ -7,7 +7,8 @@ OBJ=src/interval_tree.o \
     src/hash_tree.o \
     src/lcp_tree.o \
     src/rope.o \
-    src/euler_tour.o
+    src/euler_tour.o \
+    src/incremental_hull.o
 
 
 CFLAGS   = -O2 -g -std=c11 -Wall -I.
@@ -34,6 +35,7 @@ images: t/util/test_helper
 	(echo "HASHTREE ADD 1|a"; echo "HASHTREE ADD 2|b"; echo "HASHTREE ADD 3|c"; echo "HASHTREE ADD 4|d"; echo "HASHTREE ADD 5|e"; echo "HASHTREE ADD 6|f"; echo "HASHTREE ADD 7|g"; echo "HASHTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/hash_tree.png
 	(echo "LCP ADD apple"; echo "LCP ADD application"; echo "LCP ADD banana"; echo "LCP ADD band"; echo "LCP ADD bandit"; echo "LCP ADD cat"; echo "LCP dog"; echo "LCP GRAPH") | ./t/util/test_helper | dot -Tpng -o images/lcp_tree.png
 	(echo "ROPE ADD 0|a"; echo "ROPE ADD 1|b"; echo "ROPE ADD 2|c"; echo "ROPE ADD 3|d"; echo "ROPE ADD 4|e"; echo "ROPE ADD 5|f"; echo "ROPE ADD 6|g"; echo "ROPE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/rope.png
+	(echo "INCHULL ADD 10.0 0.0"; echo "INCHULL ADD 15.0 75.0"; echo "INCHULL ADD 18.0 96.0"; echo "INCHULL ADD 20.0 100.0"; echo "INCHULL ADD 22.0 96.0"; echo "INCHULL ADD 25.0 75.0"; echo "INCHULL ADD 30.0 0.0"; echo "INCHULL GRAPH") | ./t/util/test_helper | dot -Tpng -o images/incremental_hull.png
 	(echo "EULER LINK 0 1"; echo "EULER LINK 1 2"; echo "EULER LINK 2 3"; echo "EULER LINK 3 4"; echo "EULER LINK 4 5"; echo "EULER LINK 5 6"; echo "EULER GRAPH") | ./t/util/test_helper | dot -Tpng -o images/euler_tour.png
 
 clean:

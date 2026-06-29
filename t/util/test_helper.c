@@ -11,6 +11,7 @@
 #include "src/lcp_tree.h"
 #include "src/rope.h"
 #include "src/euler_tour.h"
+#include "src/incremental_hull.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
     lcp_tree lcpt;
     rope tropt;
     euler_tour ett;
+    inc_hull_tree iht;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -46,6 +48,7 @@ int main(int argc, char *argv[])
     lcp_tree_init(&lcpt);
     rope_init(&tropt);
     euler_tour_init(&ett, 1000);
+    inc_hull_init(&iht);
 
     char buf[4096];
 
@@ -272,6 +275,20 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 11. Incremental Hull Commands */
+        else if (strncmp(buf, "INCHULL ADD ", 12) == 0) {
+            double x, y;
+            if (sscanf(buf + 12, "%lf %lf", &x, &y) == 2) {
+                inc_hull_insert(&iht, x, y);
+            }
+        } else if (strcmp(buf, "INCHULL QUERY") == 0) {
+            inc_hull_node *curr;
+            RB_FOREACH(curr, inc_hull_rb, &iht.rbt)
+            {
+                printf("%.1f %.1f\n", curr->x, curr->y);
+            }
+        }
+
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
         } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
@@ -311,6 +328,7 @@ int main(int argc, char *argv[])
     lcp_tree_destroy(&lcpt);
     rope_destroy(&tropt);
     euler_tour_destroy(&ett);
+    inc_hull_destroy(&iht);
 
     return 0;
 }
