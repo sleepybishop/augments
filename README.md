@@ -12,6 +12,8 @@ Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation compl
 ## Repository Structure
 
 *   [src/](file:///home/joe/src/sleepybishop/augments/src/): Source code for all base templates and augmentations.
+*   [t/](file:///home/joe/src/sleepybishop/augments/t/): Comprehensive test suite running under Valgrind.
+*   [t/util/test_helper.c](file:///home/joe/src/sleepybishop/augments/t/util/test_helper.c): Unified interactive CLI harness for testing and visualization.
 
 ---
 

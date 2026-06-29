@@ -8,6 +8,12 @@ all: $(OBJ);
 
 main: main.o $(OBJ)
 
+t/util/test_helper: t/util/test_helper.o $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@
+
+check: t/util/test_helper
+	prove -v t/
+
 images: t/util/test_helper
 	mkdir -p images
 	(echo "ITREE ADD 1|10|20"; echo "ITREE ADD 2|15|25"; echo "ITREE ADD 3|5|15"; echo "ITREE ADD 4|30|40"; echo "ITREE ADD 5|25|35"; echo "ITREE ADD 6|8|12"; echo "ITREE ADD 7|1|6"; echo "ITREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/interval_tree.png
