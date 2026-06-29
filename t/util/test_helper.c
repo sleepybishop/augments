@@ -9,6 +9,7 @@
 #include "src/range_sum.h"
 #include "src/hash_tree.h"
 #include "src/lcp_tree.h"
+#include "src/rope.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
     sum_tree st;
     hash_tree_tree ht;
     lcp_tree lcpt;
+    rope ropt;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -40,6 +42,7 @@ int main(int argc, char *argv[])
     sum_tree_init(&st);
     hash_tree_init(&ht);
     lcp_tree_init(&lcpt);
+    rope_init(&ropt);
 
     char buf[4096];
 
@@ -224,6 +227,30 @@ int main(int argc, char *argv[])
             printf("%zu\n", lcp_tree_query(&lcpt));
         }
 
+        /* 9. Rope Commands */
+        else if (strncmp(buf, "ROPE ADD ", 9) == 0) {
+            size_t idx;
+            char val;
+            if (sscanf(buf + 9, "%zu|%c", &idx, &val) == 2) {
+                rope_insert(&ropt, idx, val);
+            }
+        } else if (strncmp(buf, "ROPE REMOVE ", 12) == 0) {
+            size_t idx;
+            if (sscanf(buf + 12, "%zu", &idx) == 1) {
+                rope_remove(&ropt, idx);
+            }
+        } else if (strncmp(buf, "ROPE QUERY ", 11) == 0) {
+            size_t idx;
+            if (sscanf(buf + 11, "%zu", &idx) == 1) {
+                char res = rope_query(&ropt, idx);
+                if (res) {
+                    printf("%c\n", res);
+                } else {
+                    printf("\n");
+                }
+            }
+        }
+
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
         } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
@@ -246,6 +273,8 @@ int main(int argc, char *argv[])
             hash_tree_graph(&ht, NULL);
         } else if (strcmp(buf, "LCP GRAPH") == 0) {
             lcp_tree_graph(&lcpt, NULL);
+        } else if (strcmp(buf, "ROPE GRAPH") == 0) {
+            rope_graph(&ropt, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
             printf("%s\n", buf + 5);
         }
@@ -259,6 +288,7 @@ int main(int argc, char *argv[])
     sum_tree_destroy(&st);
     hash_tree_destroy(&ht);
     lcp_tree_destroy(&lcpt);
+    rope_destroy(&ropt);
 
     return 0;
 }

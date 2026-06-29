@@ -5,7 +5,8 @@ OBJ=src/interval_tree.o \
     src/range_min.o \
     src/range_sum.o \
     src/hash_tree.o \
-    src/lcp_tree.o
+    src/lcp_tree.o \
+    src/rope.o
 
 
 CFLAGS   = -O2 -g -std=c11 -Wall -I.
@@ -31,6 +32,7 @@ images: t/util/test_helper
 	(echo "SUMTREE ADD 1|10.0"; echo "SUMTREE ADD 2|5.0"; echo "SUMTREE ADD 3|15.0"; echo "SUMTREE ADD 4|3.0"; echo "SUMTREE ADD 5|8.0"; echo "SUMTREE ADD 6|12.0"; echo "SUMTREE ADD 7|1.0"; echo "SUMTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/range_sum.png
 	(echo "HASHTREE ADD 1|a"; echo "HASHTREE ADD 2|b"; echo "HASHTREE ADD 3|c"; echo "HASHTREE ADD 4|d"; echo "HASHTREE ADD 5|e"; echo "HASHTREE ADD 6|f"; echo "HASHTREE ADD 7|g"; echo "HASHTREE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/hash_tree.png
 	(echo "LCP ADD apple"; echo "LCP ADD application"; echo "LCP ADD banana"; echo "LCP ADD band"; echo "LCP ADD bandit"; echo "LCP ADD cat"; echo "LCP dog"; echo "LCP GRAPH") | ./t/util/test_helper | dot -Tpng -o images/lcp_tree.png
+	(echo "ROPE ADD 0|a"; echo "ROPE ADD 1|b"; echo "ROPE ADD 2|c"; echo "ROPE ADD 3|d"; echo "ROPE ADD 4|e"; echo "ROPE ADD 5|f"; echo "ROPE ADD 6|g"; echo "ROPE GRAPH") | ./t/util/test_helper | dot -Tpng -o images/rope.png
 
 clean:
 	$(RM) src/*.o t/util/*.o *.o main test_helper

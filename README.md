@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **8 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **9 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 2. **Treaps ([src/treap.h](file:///home/joe/src/sleepybishop/augments/src/treap.h))**: BSD-style randomized binary search tree template supporting split and merge.
 
@@ -32,6 +32,10 @@ Below is a map of the base tree templates in the library and the modules derived
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 *   **[Hash Tree](file:///home/joe/src/sleepybishop/augments/src/hash_tree.h)** (`HASHTREE`): Augments the tree with a rolling hash of the sequence to support fast substring equality checks.
 *   **[LCP Tree](file:///home/joe/src/sleepybishop/augments/src/lcp_tree.h)** (`LCPTREE`): Augments the tree with a longest common prefix of string keys, enabling optimal prefix searches.
+
+### 2. Base Treap Template (`treap.h`)
+
+*   **[Rope](file:///home/joe/src/sleepybishop/augments/src/rope.h)** (`ROPE`): Augments a Treap with subtree sizes to support character sequences and fast split/merge indexing.
 
 ---
 
@@ -183,6 +187,22 @@ Augments the tree with a longest common prefix of string keys, enabling optimal 
     *   `void lcp_tree_graph(lcp_tree *tree, FILE *stream)`
 
 ![LCP Tree](images/lcp_tree.png)
+
+---
+
+### 9. Rope (`ROPE`)
+Augments a Treap with subtree sizes to support character sequences and fast split/merge indexing.
+
+*   **Header**: [src/rope.h](file:///home/joe/src/sleepybishop/augments/src/rope.h)
+*   **Implementation**: [src/rope.c](file:///home/joe/src/sleepybishop/augments/src/rope.c)
+*   **Key API**:
+    *   `void rope_init(rope *r, tree_allocator *alloc)`
+    *   `void rope_add(rope *r, size_t idx, char val)`
+    *   `void rope_remove(rope *r, size_t idx)`
+    *   `char rope_query(rope *r, size_t idx)`
+    *   `void rope_graph(rope *r, FILE *stream)`
+
+![Rope](images/rope.png)
 
 ---
 
