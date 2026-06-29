@@ -10,6 +10,7 @@
 #include "src/hash_tree.h"
 #include "src/lcp_tree.h"
 #include "src/rope.h"
+#include "src/euler_tour.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -32,7 +33,8 @@ int main(int argc, char *argv[])
     sum_tree st;
     hash_tree_tree ht;
     lcp_tree lcpt;
-    rope ropt;
+    rope tropt;
+    euler_tour ett;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
@@ -42,7 +44,8 @@ int main(int argc, char *argv[])
     sum_tree_init(&st);
     hash_tree_init(&ht);
     lcp_tree_init(&lcpt);
-    rope_init(&ropt);
+    rope_init(&tropt);
+    euler_tour_init(&ett, 1000);
 
     char buf[4096];
 
@@ -227,27 +230,45 @@ int main(int argc, char *argv[])
             printf("%zu\n", lcp_tree_query(&lcpt));
         }
 
-        /* 9. Rope Commands */
+        /* 9. True Rope Commands */
         else if (strncmp(buf, "ROPE ADD ", 9) == 0) {
             size_t idx;
             char val;
             if (sscanf(buf + 9, "%zu|%c", &idx, &val) == 2) {
-                rope_insert(&ropt, idx, val);
+                rope_insert(&tropt, idx, val);
             }
         } else if (strncmp(buf, "ROPE REMOVE ", 12) == 0) {
             size_t idx;
             if (sscanf(buf + 12, "%zu", &idx) == 1) {
-                rope_remove(&ropt, idx);
+                rope_remove(&tropt, idx);
             }
         } else if (strncmp(buf, "ROPE QUERY ", 11) == 0) {
             size_t idx;
             if (sscanf(buf + 11, "%zu", &idx) == 1) {
-                char res = rope_query(&ropt, idx);
+                char res = rope_query(&tropt, idx);
                 if (res) {
                     printf("%c\n", res);
                 } else {
                     printf("\n");
                 }
+            }
+        }
+
+        /* 10. Euler Tour Commands */
+        else if (strncmp(buf, "EULER LINK ", 11) == 0) {
+            int u, v;
+            if (sscanf(buf + 11, "%d %d", &u, &v) == 2) {
+                euler_tour_link(&ett, u, v);
+            }
+        } else if (strncmp(buf, "EULER CUT ", 10) == 0) {
+            int u, v;
+            if (sscanf(buf + 10, "%d %d", &u, &v) == 2) {
+                euler_tour_cut(&ett, u, v);
+            }
+        } else if (strncmp(buf, "EULER CONNECTED ", 16) == 0) {
+            int u, v;
+            if (sscanf(buf + 16, "%d %d", &u, &v) == 2) {
+                printf("%d\n", euler_tour_connected(&ett, u, v));
             }
         }
 
@@ -274,7 +295,7 @@ int main(int argc, char *argv[])
         } else if (strcmp(buf, "LCP GRAPH") == 0) {
             lcp_tree_graph(&lcpt, NULL);
         } else if (strcmp(buf, "ROPE GRAPH") == 0) {
-            rope_graph(&ropt, NULL);
+            rope_graph(&tropt, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
             printf("%s\n", buf + 5);
         }
@@ -288,7 +309,8 @@ int main(int argc, char *argv[])
     sum_tree_destroy(&st);
     hash_tree_destroy(&ht);
     lcp_tree_destroy(&lcpt);
-    rope_destroy(&ropt);
+    rope_destroy(&tropt);
+    euler_tour_destroy(&ett);
 
     return 0;
 }

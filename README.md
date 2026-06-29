@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **9 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **10 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 2. **Treaps ([src/treap.h](file:///home/joe/src/sleepybishop/augments/src/treap.h))**: BSD-style randomized binary search tree template supporting split and merge.
 
@@ -36,6 +36,7 @@ Below is a map of the base tree templates in the library and the modules derived
 ### 2. Base Treap Template (`treap.h`)
 
 *   **[Rope](file:///home/joe/src/sleepybishop/augments/src/rope.h)** (`ROPE`): Augments a Treap with subtree sizes to support character sequences and fast split/merge indexing.
+*   **[Euler Tour Tree](file:///home/joe/src/sleepybishop/augments/src/euler_tour.h)** (`EULER`): Augments a Treap to represent forest structures via Euler tours, supporting dynamic link, cut, and connectivity queries.
 
 ---
 
@@ -203,6 +204,23 @@ Augments a Treap with subtree sizes to support character sequences and fast spli
     *   `void rope_graph(rope *r, FILE *stream)`
 
 ![Rope](images/rope.png)
+
+---
+
+### 10. Euler Tour Tree (`EULER`)
+Augments a Treap to represent forest structures via Euler tours, supporting dynamic link, cut, and connectivity queries.
+
+*   **Header**: [src/euler_tour.h](file:///home/joe/src/sleepybishop/augments/src/euler_tour.h)
+*   **Implementation**: [src/euler_tour.c](file:///home/joe/src/sleepybishop/augments/src/euler_tour.c)
+*   **Key API**:
+    *   `void euler_tour_init(euler_tour *et, size_t max_vertices, tree_allocator *alloc)`
+    *   `void euler_tour_destroy(euler_tour *et)`
+    *   `void euler_tour_link(euler_tour *et, int u, int v)`
+    *   `void euler_tour_cut(euler_tour *et, int u, int v)`
+    *   `int euler_tour_connected(euler_tour *et, int u, int v)`
+    *   `void euler_tour_graph(euler_tour *et, FILE *stream)`
+
+![Euler Tour Tree](images/euler_tour.png)
 
 ---
 
