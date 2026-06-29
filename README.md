@@ -2,7 +2,7 @@
 
 [#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
 
-A modular C library implementing **2 advanced tree augmentations** built on top of robust, production-grade base tree templates:
+A modular C library implementing **3 advanced tree augmentations** built on top of robust, production-grade base tree templates:
 1. **Red-Black Trees ([src/tree.h](file:///home/joe/src/sleepybishop/augments/src/tree.h))**: Upgraded OpenBSD Red-Black tree macro library.
 
 Every augmentation maintains $O(\log n)$ insertion, deletion, and rotation complexity by computing subtree-local properties on the fly.
@@ -24,6 +24,7 @@ Below is a map of the base tree templates in the library and the modules derived
 ### 1. Base Red-Black Tree Template (`tree.h`)
 
 *   **[Interval Tree](file:///home/joe/src/sleepybishop/augments/src/interval_tree.h)** (`ITREE`): Augments the tree with a `max` field representing the maximum high endpoint in the subtree, enabling optimal range overlap and containment searches.
+*   **[Order-Statistic Tree](file:///home/joe/src/sleepybishop/augments/src/order_statistic.h)** (`OSTREE`): Augments the tree with a `size` field representing the number of nodes in the subtree, enabling rank and selection queries.
 *   **[Max Subarray Sum Tree](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)** (`MAXSUB`): Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 
 ---
@@ -65,7 +66,24 @@ Augments the tree with a `max` field representing the maximum high endpoint in t
 
 ---
 
-### 2. Max Subarray Sum Tree (`MAXSUB`)
+### 2. Order-Statistic Tree (`OSTREE`)
+Augments the tree with a `size` field representing the number of nodes in the subtree, enabling rank and selection queries.
+
+*   **Header**: [src/order_statistic.h](file:///home/joe/src/sleepybishop/augments/src/order_statistic.h)
+*   **Implementation**: [src/order_statistic.c](file:///home/joe/src/sleepybishop/augments/src/order_statistic.c)
+*   **Key API**:
+    *   `void os_tree_init(os_tree *tree, tree_allocator *alloc)`
+    *   `int os_tree_add(os_tree *tree, int key)`
+    *   `int os_tree_remove(os_tree *tree, int key)`
+    *   `os_node *os_tree_select(os_tree *tree, size_t rank)`
+    *   `size_t os_tree_rank(os_tree *tree, int key)`
+    *   `void os_tree_graph(os_tree *tree, FILE *stream)`
+
+![Order-Statistic Tree](images/order_statistic.png)
+
+---
+
+### 3. Max Subarray Sum Tree (`MAXSUB`)
 Stores a sequence of values and augments each node with subtree-level sum, max_prefix, max_suffix, and max_sub metrics, enabling range maximum subarray sum queries.
 
 *   **Header**: [src/max_subarray.h](file:///home/joe/src/sleepybishop/augments/src/max_subarray.h)

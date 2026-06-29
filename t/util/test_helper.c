@@ -3,6 +3,7 @@
 #include <string.h>
 #include "src/interval_tree.h"
 #include "src/max_subarray.h"
+#include "src/order_statistic.h"
 
 static int itree_print_cb(itree_node *node, void *arg)
 {
@@ -14,9 +15,11 @@ int main(int argc, char *argv[])
 {
     itree it;
     sub_tree subt;
+    os_tree ost;
 
     interval_tree_init(&it);
     sub_tree_init(&subt);
+    os_tree_init(&ost);
 
     char buf[4096];
 
@@ -42,6 +45,39 @@ int main(int argc, char *argv[])
             int overlaps;
             if (sscanf(buf + 11, "%zu|%zu|%d", &low, &high, &overlaps) == 3) {
                 interval_tree_find(&it, low, high, overlaps, itree_print_cb, NULL);
+            }
+        }
+
+        /* 2. Order-Statistic Tree Commands */
+        else if (strncmp(buf, "OSTREE ADD ", 11) == 0) {
+            int key;
+            if (sscanf(buf + 11, "%d", &key) == 1) {
+                os_tree_add(&ost, key);
+            }
+        } else if (strncmp(buf, "OSTREE REMOVE ", 14) == 0) {
+            int key;
+            if (sscanf(buf + 14, "%d", &key) == 1) {
+                os_tree_remove(&ost, key);
+            }
+        } else if (strncmp(buf, "OSTREE SELECT ", 14) == 0) {
+            size_t rank;
+            if (sscanf(buf + 14, "%zu", &rank) == 1) {
+                os_node *n = os_tree_select(&ost, rank);
+                if (n) {
+                    printf("%d\n", n->key);
+                } else {
+                    printf("NULL\n");
+                }
+            }
+        } else if (strncmp(buf, "OSTREE RANK ", 12) == 0) {
+            int key;
+            if (sscanf(buf + 12, "%d", &key) == 1) {
+                size_t r = os_tree_rank(&ost, key);
+                if (r == (size_t)-1) {
+                    printf("NOT_FOUND\n");
+                } else {
+                    printf("%zu\n", r);
+                }
             }
         }
 
@@ -72,6 +108,14 @@ int main(int argc, char *argv[])
 
         else if (strcmp(buf, "GRAPH") == 0 || strcmp(buf, "ITREE GRAPH") == 0) {
             interval_tree_graph(&it, NULL);
+        } else if (strcmp(buf, "INCHULL GRAPH") == 0) {
+            inc_hull_graph(&iht, NULL);
+        } else if (strcmp(buf, "DYNHULL GRAPH") == 0) {
+            dyn_hull_graph(&dht, NULL);
+        } else if (strcmp(buf, "EULER GRAPH") == 0) {
+            euler_tour_graph(&ett, NULL);
+        } else if (strcmp(buf, "OSTREE GRAPH") == 0) {
+            os_tree_graph(&ost, NULL);
         } else if (strcmp(buf, "MAXSUB GRAPH") == 0) {
             sub_tree_graph(&subt, NULL);
         } else if (strncmp(buf, "ECHO ", 5) == 0) {
@@ -81,6 +125,7 @@ int main(int argc, char *argv[])
 
     interval_tree_destroy(&it);
     sub_tree_destroy(&subt);
+    os_tree_destroy(&ost);
 
     return 0;
 }
