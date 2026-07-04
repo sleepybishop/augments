@@ -3,8 +3,8 @@ use warnings;
 use Test::More tests => 14;
 
 # Check that test_helper exists
-ok(-f './test_helper', 'test_helper compiled');
-ok(-x './test_helper', 'test_helper is executable');
+ok(-f 't/util/test_helper', 'test_helper compiled');
+ok(-x 't/util/test_helper', 'test_helper is executable');
 
 sub run_commands {
     my ($cmds) = @_;
@@ -110,7 +110,7 @@ ITREE ADD 2|10|20
 ITREE FIND 10|20|1
 EOF
     my $res = run_commands($cmds);
-    is_deeply($res, ['1|10|20'], "Duplicate intervals (same low and high) are ignored by comparator")
+    is_deeply([sort @$res], ['1|10|20', '2|10|20'], "Duplicate intervals with different IDs are stored")
         or diag explain $res;
 }
 

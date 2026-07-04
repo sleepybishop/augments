@@ -1,19 +1,17 @@
 OBJ=src/interval_tree.o \
-    src/max_subarray.o \
     src/order_statistic.o \
-    src/priority_search.o \
-    src/range_min.o \
     src/range_sum.o \
-    src/hash_tree.o \
+    src/range_min.o \
+    src/priority_search.o \
+    src/max_subarray.o src/hash_tree.o \
     src/lcp_tree.o \
     src/rope.o \
     src/euler_tour.o \
     src/incremental_hull.o \
     src/dynamic_hull.o
 
-
-CFLAGS   = -O2 -g -std=c11 -Wall -I.
-CFLAGS  += -march=native -funroll-loops -ftree-vectorize -Wno-unused
+CFLAGS   = -O2 -g -std=c11 -Wall -I. -fPIC
+CFLAGS  += -funroll-loops -ftree-vectorize -Wno-unused
 
 all: $(OBJ);
 
@@ -44,17 +42,7 @@ clean:
 	$(RM) src/*.o t/util/*.o *.o main test_helper
 
 indent:
-	find -name '*.[h,c]' | xargs clang-format -i
+	find . -name '*.[h,c]' | xargs clang-format -i
 
-gperf: LDLIBS = -lprofiler -ltcmalloc
-gperf: clean t/00util/bench
-	CPUPROFILE_FREQUENCY=100000000 CPUPROFILE=gperf.prof cat data_sample.txt | ./main
-	pprof ./main gperf.prof --callgrind > callgrind.gperf
-	gprof2dot --format=callgrind callgrind.gperf -z main | dot -T svg > gperf.svg
-
-ubsan: CC=clang
-ubsan: CFLAGS += -fsanitize=undefined,implicit-conversion
-ubsan: LDLIBS += -lubsan
-ubsan: clean main
-	cat data_sample.txt | ./main
-										
+scan:
+	scan-build --status-bugs $(MAKE) clean main
