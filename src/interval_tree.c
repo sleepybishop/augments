@@ -14,6 +14,12 @@ static int node_cmp(struct itree_node *a, struct itree_node *b)
             return -1;
         else if (a->high < b->high)
             return 1;
+        else {
+            if (a->id < b->id)
+                return -1;
+            else if (a->id > b->id)
+                return 1;
+        }
     }
     return 0;
 }
@@ -45,35 +51,36 @@ RB_GENERATE(_INTERVAL_TREE, itree_node, link, node_cmp);
 
 void interval_tree_init(itree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static itree_node *create_node(size_t low, size_t high, size_t id)
+static void create_node(itree_node *n,  size_t low, size_t high, size_t id)
 {
-    itree_node *n = (itree_node *)calloc(1, sizeof(itree_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->id = id;
         n->low = low;
         n->high = high;
         n->max = high;
     }
-    return n;
-}
+    }
 
-int interval_tree_add(itree *tree, size_t low, size_t high, size_t id)
+int interval_tree_add(itree *tree, itree_node *n, size_t low, size_t high, size_t id)
 {
-    int ret = 1;
-    itree_node *f, *n;
-    n = create_node(low, high, id);
+    int ret = 0;
+    itree_node *f;
+    create_node(n, low, high, id);
     if (!n)
-        return 0;
+        return -1;
 
     f = RB_INSERT(_INTERVAL_TREE, &tree->rbt, n);
     if (f) {
-        free(n); /* already exists */
-        ret = 0;
+         /* already exists */
+        ret = 1;
     }
     return ret;
 }
@@ -94,6 +101,10 @@ static void find_nodes_helper(itree_node *node, struct find_ctx *ctx)
 
     /* Skip entire subtree if query low is greater than the max high of this subtree */
     if (ctx->low > node->max)
+        return;
+
+    /* For containment, skip entire subtree if query high is greater than max high of subtree */
+    if (ctx->overlaps == 0 && ctx->high > node->max)
         return;
 
     /* Descend left only if it is possible to find matches (ctx->low <= left->max) */
@@ -122,9 +133,17 @@ static void find_nodes_helper(itree_node *node, struct find_ctx *ctx)
         }
     }
 
-    /* Descend right only if query high is >= node's low */
-    if (RB_RIGHT(node, link) && ctx->high >= node->low) {
-        find_nodes_helper(RB_RIGHT(node, link), ctx);
+    /* Descend right only if it is possible to find matches */
+    if (RB_RIGHT(node, link)) {
+        if (ctx->overlaps > 0) {
+            if (ctx->high >= node->low) {
+                find_nodes_helper(RB_RIGHT(node, link), ctx);
+            }
+        } else {
+            if (ctx->low >= node->low) {
+                find_nodes_helper(RB_RIGHT(node, link), ctx);
+            }
+        }
     }
 }
 
@@ -173,27 +192,32 @@ int interval_tree_remove(itree *tree, size_t low, size_t high, size_t id)
         itree_node *n = c_ctx.collected[i];
         if (n->low == low && n->high == high && (id == (size_t)-1 || n->id == id)) {
             RB_REMOVE(_INTERVAL_TREE, &tree->rbt, n);
-            free(n);
-            removed++;
+                        removed++;
         }
     }
     free(c_ctx.collected);
     return removed;
 }
 
-static void destroy_node(itree_node *node)
+static void destroy_node(itree *tree, itree_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            itree_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            itree_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void interval_tree_destroy(itree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }

@@ -1,6 +1,10 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "priority_search.h"
+
+#define EPSILON 1e-6
 
 static int node_cmp(struct ps_node *a, struct ps_node *b)
 {
@@ -37,7 +41,7 @@ static void augment_node(ps_node *node)
         }
 
         /* Stop propagating early if the max didn't change */
-        if (node->max_y == old_max_y && node->max_y_node == old_max_node)
+        if (fabs(node->max_y - old_max_y) < EPSILON && node->max_y_node == old_max_node)
             break;
 
         node = RB_PARENT(node, link);
@@ -50,43 +54,41 @@ RB_GENERATE(_PS_TREE, ps_node, link, node_cmp);
 
 void ps_tree_init(ps_tree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static ps_node *create_node(double x, double y)
+static void create_node(ps_node *n,  double x, double y)
 {
-    ps_node *n = (ps_node *)calloc(1, sizeof(ps_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->x = x;
         n->y = y;
         n->max_y = y;
         n->max_y_node = n;
     }
-    return n;
-}
+    }
 
-int ps_tree_add(ps_tree *tree, double x, double y)
+int ps_tree_add(ps_tree *tree, ps_node *n, double x, double y)
 {
     if (!tree)
-        return 0;
-    ps_node *n = create_node(x, y);
+        return -1;
+    create_node(n, x, y);
     if (!n)
-        return 0;
+        return -1;
     ps_node *f = RB_INSERT(_PS_TREE, &tree->rbt, n);
     if (f) {
-        free(n);
-        return 0; /* Duplicate */
+                return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 ps_node *ps_tree_find(ps_tree *tree, double x, double y)
 {
-    if (!tree)
-        return NULL;
-    ps_node temp = {.x = x, .y = y};
+        ps_node temp = {.x = x, .y = y};
     return RB_FIND(_PS_TREE, &tree->rbt, &temp);
 }
 
@@ -98,8 +100,7 @@ int ps_tree_remove(ps_tree *tree, double x, double y)
     if (!n)
         return 0;
     RB_REMOVE(_PS_TREE, &tree->rbt, n);
-    free(n);
-    return 1;
+        return 1;
 }
 
 static void ps_query_helper(ps_node *node, double x_min, double x_max, double y_min, ps_cb cb, void *arg)
@@ -133,19 +134,25 @@ void ps_tree_query(ps_tree *tree, double x_min, double x_max, double y_min, ps_c
     }
 }
 
-static void destroy_node(ps_node *node)
+static void destroy_node(ps_tree *tree, ps_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            ps_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            ps_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void ps_tree_destroy(ps_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }

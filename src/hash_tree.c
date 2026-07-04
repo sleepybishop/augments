@@ -60,15 +60,14 @@ RB_GENERATE(_HASHTREE, hash_tree_node, link, hash_tree_cmp)
 
 void hash_tree_init(hash_tree_tree *tree)
 {
-    RB_INIT(&tree->rbt);
+    if (!tree)
+        return;
+        RB_INIT(&tree->rbt);
 }
 
-int hash_tree_insert(hash_tree_tree *tree, size_t key, char val)
+int hash_tree_insert(hash_tree_tree *tree, hash_tree_node *node, size_t key, char val)
 {
-    hash_tree_node *node = malloc(sizeof(*node));
-    if (!node)
-        return -1;
-    node->key = key;
+            node->key = key;
     node->val = val;
     node->size = 1;
     node->hash = (uint64_t)val % M_CONST;
@@ -76,10 +75,11 @@ int hash_tree_insert(hash_tree_tree *tree, size_t key, char val)
 
     hash_tree_node *res = RB_INSERT(_HASHTREE, &tree->rbt, node);
     if (res != NULL) {
-        free(node);
+                res->val = val;
+        hash_tree_augment(res);
         return 0;
     }
-    return 1;
+    return 0;
 }
 
 int hash_tree_remove(hash_tree_tree *tree, size_t key)
@@ -88,8 +88,7 @@ int hash_tree_remove(hash_tree_tree *tree, size_t key)
     hash_tree_node *node = RB_FIND(_HASHTREE, &tree->rbt, &search);
     if (node) {
         RB_REMOVE(_HASHTREE, &tree->rbt, node);
-        free(node);
-        return 1;
+                return 1;
     }
     return 0;
 }
@@ -106,28 +105,32 @@ uint64_t hash_tree_hash(hash_tree_tree *tree)
     return root ? root->hash : 0;
 }
 
-static void destroy_node(hash_tree_node *node)
+static void destroy_node(hash_tree_tree *tree, hash_tree_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            hash_tree_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            hash_tree_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void hash_tree_destroy(hash_tree_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }
 
 static void graph_node(hash_tree_node *node, FILE *f)
 {
-    if (!node)
-        return;
-    fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"{{ key: %zu | val: '%c' } | { size: %zu | hash: %llu }}\"];\n",
+        fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"{{ key: %zu | val: '%c' } | { size: %zu | hash: %llu }}\"];\n",
             (void *)node, RB_COLOR(node, link) == RB_BLACK ? "#000000" : "#aa0000", node->key, node->val, node->size,
             (unsigned long long)node->hash);
 

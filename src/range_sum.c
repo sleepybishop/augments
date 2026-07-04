@@ -1,6 +1,10 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "range_sum.h"
+
+#define EPSILON 1e-6
 
 static int node_cmp(struct sum_node *a, struct sum_node *b)
 {
@@ -21,7 +25,7 @@ static void augment_node(sum_node *node)
         node->sum = node->val + (l ? l->sum : 0.0) + (r ? r->sum : 0.0);
 
         /* Stop propagating early if the sum didn't change */
-        if (node->sum == old_sum)
+        if (fabs(node->sum - old_sum) < EPSILON)
             break;
 
         node = RB_PARENT(node, link);
@@ -34,42 +38,40 @@ RB_GENERATE(_SUM_TREE, sum_node, link, node_cmp);
 
 void sum_tree_init(sum_tree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static sum_node *create_node(int key, double val)
+static void create_node(sum_node *n,  int key, double val)
 {
-    sum_node *n = (sum_node *)calloc(1, sizeof(sum_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->key = key;
         n->val = val;
         n->sum = val;
     }
-    return n;
-}
+    }
 
-int sum_tree_add(sum_tree *tree, int key, double val)
+int sum_tree_add(sum_tree *tree, sum_node *n, int key, double val)
 {
     if (!tree)
-        return 0;
-    sum_node *n = create_node(key, val);
+        return -1;
+    create_node(n, key, val);
     if (!n)
-        return 0;
+        return -1;
     sum_node *f = RB_INSERT(_SUM_TREE, &tree->rbt, n);
     if (f) {
-        free(n);
-        return 0; /* Duplicate */
+                return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 sum_node *sum_tree_find(sum_tree *tree, int key)
 {
-    if (!tree)
-        return NULL;
-    sum_node temp = {.key = key};
+        sum_node temp = {.key = key};
     return RB_FIND(_SUM_TREE, &tree->rbt, &temp);
 }
 
@@ -81,8 +83,7 @@ int sum_tree_remove(sum_tree *tree, int key)
     if (!n)
         return 0;
     RB_REMOVE(_SUM_TREE, &tree->rbt, n);
-    free(n);
-    return 1;
+        return 1;
 }
 
 void sum_tree_update(sum_tree *tree, int key, double new_val)
@@ -120,19 +121,25 @@ double sum_tree_query(sum_tree *tree, int low_key, int high_key)
     return sum_less_than_or_equal(RB_ROOT(&tree->rbt), high_key) - sum_less_than_or_equal(RB_ROOT(&tree->rbt), low_key - 1);
 }
 
-static void destroy_node(sum_node *node)
+static void destroy_node(sum_tree *tree, sum_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            sum_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            sum_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void sum_tree_destroy(sum_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }

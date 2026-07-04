@@ -22,7 +22,7 @@ typedef struct {
 } os_tree;
 
 void os_tree_init(os_tree *tree);
-int os_tree_add(os_tree *tree, int key);
+int os_tree_add(os_tree *tree, os_node *node, int key);
 int os_tree_remove(os_tree *tree, int key);
 os_node *os_tree_select(os_tree *tree, size_t rank);
 size_t os_tree_rank(os_tree *tree, int key);

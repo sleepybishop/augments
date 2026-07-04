@@ -23,7 +23,7 @@ typedef struct {
 } min_tree;
 
 void min_tree_init(min_tree *tree);
-int min_tree_add(min_tree *tree, int key, double val);
+int min_tree_add(min_tree *tree, min_node *node, int key, double val);
 int min_tree_remove(min_tree *tree, int key);
 void min_tree_update(min_tree *tree, int key, double new_val);
 double min_tree_query(min_tree *tree, int low_key, int high_key);

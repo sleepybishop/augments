@@ -26,7 +26,7 @@ typedef struct lcp_tree {
 } lcp_tree;
 
 void lcp_tree_init(lcp_tree *tree);
-int lcp_tree_add(lcp_tree *tree, const char *str);
+int lcp_tree_add(lcp_tree *tree, lcp_node *node, const char *str);
 int lcp_tree_remove(lcp_tree *tree, const char *str);
 size_t lcp_tree_query(lcp_tree *tree);
 void lcp_tree_destroy(lcp_tree *tree);

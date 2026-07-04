@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "order_statistic.h"
@@ -34,41 +35,39 @@ RB_GENERATE(_OS_TREE, os_node, link, node_cmp);
 
 void os_tree_init(os_tree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static os_node *create_node(int key)
+static void create_node(os_node *n,  int key)
 {
-    os_node *n = (os_node *)calloc(1, sizeof(os_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->key = key;
         n->size = 1;
     }
-    return n;
-}
+    }
 
-int os_tree_add(os_tree *tree, int key)
+int os_tree_add(os_tree *tree, os_node *n, int key)
 {
     if (!tree)
-        return 0;
-    os_node *n = create_node(key);
+        return -1;
+    create_node(n, key);
     if (!n)
-        return 0;
+        return -1;
     os_node *f = RB_INSERT(_OS_TREE, &tree->rbt, n);
     if (f) {
-        free(n);
-        return 0; /* Duplicate */
+                return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 os_node *os_tree_find(os_tree *tree, int key)
 {
-    if (!tree)
-        return NULL;
-    os_node temp = {.key = key};
+        os_node temp = {.key = key};
     return RB_FIND(_OS_TREE, &tree->rbt, &temp);
 }
 
@@ -80,15 +79,12 @@ int os_tree_remove(os_tree *tree, int key)
     if (!n)
         return 0;
     RB_REMOVE(_OS_TREE, &tree->rbt, n);
-    free(n);
-    return 1;
+        return 1;
 }
 
 os_node *os_tree_select(os_tree *tree, size_t rank)
 {
-    if (!tree)
-        return NULL;
-    os_node *curr = RB_ROOT(&tree->rbt);
+        os_node *curr = RB_ROOT(&tree->rbt);
     while (curr) {
         size_t left_size = RB_LEFT(curr, link) ? RB_LEFT(curr, link)->size : 0;
         if (rank == left_size)
@@ -123,19 +119,25 @@ size_t os_tree_rank(os_tree *tree, int key)
     return r;
 }
 
-static void destroy_node(os_node *node)
+static void destroy_node(os_tree *tree, os_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            os_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            os_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void os_tree_destroy(os_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }

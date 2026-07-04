@@ -1,5 +1,10 @@
 #include "dynamic_hull.h"
+#include "prng.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+#define EPSILON 1e-6
 
 static int dyn_hull_cmp(dyn_hull_node *a, dyn_hull_node *b)
 {
@@ -27,7 +32,7 @@ static dyn_hull_node *tangent_from_right(dyn_hull_node *curr, dyn_hull_node *q)
             return curr;
 
         if (curr->is_swallowed) {
-            if (ccw(curr->L_tangent, curr->R_tangent, q) > 0) {
+            if (ccw(curr->L_tangent, curr->R_tangent, q) > EPSILON) {
                 best = curr->L_tangent;
                 curr = TREAP_LEFT(curr, link);
             } else {
@@ -35,10 +40,10 @@ static dyn_hull_node *tangent_from_right(dyn_hull_node *curr, dyn_hull_node *q)
                 curr = TREAP_RIGHT(curr, link);
             }
         } else {
-            if (TREAP_LEFT(curr, link) && ccw(curr->L_tangent, curr, q) > 0) {
+            if (TREAP_LEFT(curr, link) && ccw(curr->L_tangent, curr, q) > EPSILON) {
                 best = curr->L_tangent;
                 curr = TREAP_LEFT(curr, link);
-            } else if (TREAP_RIGHT(curr, link) && ccw(curr, curr->R_tangent, q) <= 0) {
+            } else if (TREAP_RIGHT(curr, link) && ccw(curr, curr->R_tangent, q) <= EPSILON) {
                 best = curr->R_tangent;
                 curr = TREAP_RIGHT(curr, link);
             } else {
@@ -57,7 +62,7 @@ static dyn_hull_node *tangent_from_left(dyn_hull_node *curr, dyn_hull_node *q)
             return curr;
 
         if (curr->is_swallowed) {
-            if (ccw(curr->L_tangent, curr->R_tangent, q) > 0) {
+            if (ccw(curr->L_tangent, curr->R_tangent, q) > EPSILON) {
                 best = curr->R_tangent;
                 curr = TREAP_RIGHT(curr, link);
             } else {
@@ -65,10 +70,10 @@ static dyn_hull_node *tangent_from_left(dyn_hull_node *curr, dyn_hull_node *q)
                 curr = TREAP_LEFT(curr, link);
             }
         } else {
-            if (TREAP_RIGHT(curr, link) && ccw(curr, curr->R_tangent, q) > 0) {
+            if (TREAP_RIGHT(curr, link) && ccw(curr, curr->R_tangent, q) > EPSILON) {
                 best = curr->R_tangent;
                 curr = TREAP_RIGHT(curr, link);
-            } else if (TREAP_LEFT(curr, link) && ccw(curr->L_tangent, curr, q) <= 0) {
+            } else if (TREAP_LEFT(curr, link) && ccw(curr->L_tangent, curr, q) <= EPSILON) {
                 best = curr->L_tangent;
                 curr = TREAP_LEFT(curr, link);
             } else {
@@ -84,30 +89,43 @@ static void get_common_tangent(dyn_hull_node *L, dyn_hull_node *R, dyn_hull_node
     dyn_hull_node *ta = L->max_x_node;
     dyn_hull_node *tb = R->min_x_node;
 
-    for (int i = 0; i < 40; i++) {
+    int max_iters = L->size + R->size;
+    int bridged = 0;
+    for (int i = 0; i <= max_iters; i++) {
         dyn_hull_node *next_ta = tangent_from_right(L, tb);
         dyn_hull_node *next_tb = tangent_from_left(R, next_ta);
-        if (next_ta == ta && next_tb == tb)
+        if (next_ta == ta && next_tb == tb) {
+            bridged = 1;
             break;
+        }
         ta = next_ta;
         tb = next_tb;
     }
+
+    if (!bridged) {
+        fprintf(stderr, "FATAL ERROR: get_common_tangent failed to converge within proven mathematical bounds (%d iterations). Floating point instability detected.\n", max_iters);
+        abort();
+    }
+
     *out_l = ta;
     *out_r = tb;
 }
 
 static void dyn_hull_augment(dyn_hull_node *node)
 {
-    if (!node)
-        return;
-
+    
     node->min_x_node = node;
-    if (TREAP_LEFT(node, link))
+    node->size = 1;
+    if (TREAP_LEFT(node, link)) {
         node->min_x_node = TREAP_LEFT(node, link)->min_x_node;
+        node->size += TREAP_LEFT(node, link)->size;
+    }
 
     node->max_x_node = node;
-    if (TREAP_RIGHT(node, link))
+    if (TREAP_RIGHT(node, link)) {
         node->max_x_node = TREAP_RIGHT(node, link)->max_x_node;
+        node->size += TREAP_RIGHT(node, link)->size;
+    }
 
     if (!TREAP_LEFT(node, link) && !TREAP_RIGHT(node, link)) {
         node->is_swallowed = 0;
@@ -132,7 +150,7 @@ static void dyn_hull_augment(dyn_hull_node *node)
     dyn_hull_node *ta, *tb;
     get_common_tangent(TREAP_LEFT(node, link), TREAP_RIGHT(node, link), &ta, &tb);
 
-    if (ccw(ta, tb, node) <= 0) {
+    if (ccw(ta, tb, node) <= EPSILON) {
         node->is_swallowed = 1;
         node->L_tangent = ta;
         node->R_tangent = tb;
@@ -150,32 +168,23 @@ TREAP_GENERATE(dyn_hull_treap, dyn_hull_node, link, dyn_hull_cmp)
 
 void dyn_hull_init(dyn_hull_tree *tree)
 {
-    TREAP_INIT(&tree->trt);
+    if (!tree)
+        return;
+        TREAP_INIT(&tree->trt);
+    uint64_t seed = 0x123456789ULL;
+    tree->prng_state[0] = splitmix64(&seed);
+    tree->prng_state[1] = splitmix64(&seed);
 }
 
-static uint32_t fast_rand(void)
-{
-    static uint32_t x = 123456789;
-    static uint32_t y = 362436069;
-    static uint32_t z = 521288629;
-    static uint32_t w = 88675123;
-    uint32_t t = x ^ (x << 11);
-    x = y;
-    y = z;
-    z = w;
-    return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-}
-
-void dyn_hull_insert(dyn_hull_tree *tree, double x, double y)
+void dyn_hull_insert(dyn_hull_tree *tree, dyn_hull_node *p, double x, double y)
 {
     dyn_hull_node search = {.x = x, .y = y};
     if (dyn_hull_treap_TREAP_FIND(&tree->trt, &search))
         return;
 
-    dyn_hull_node *p = malloc(sizeof(*p));
-    p->x = x;
+        p->x = x;
     p->y = y;
-    TREAP_PRIO(p, link) = fast_rand();
+    TREAP_PRIO(p, link) = (uint32_t)next_xoroshiro(tree->prng_state);
     dyn_hull_treap_TREAP_INSERT(&tree->trt, p);
 }
 
@@ -185,15 +194,12 @@ void dyn_hull_remove(dyn_hull_tree *tree, double x, double y)
     dyn_hull_node *res = dyn_hull_treap_TREAP_FIND(&tree->trt, &search);
     if (res) {
         dyn_hull_treap_TREAP_REMOVE(&tree->trt, res);
-        free(res);
-    }
+            }
 }
 
 static void print_hull(dyn_hull_node *node, FILE *stream)
 {
-    if (!node)
-        return;
-
+    
     if (node->is_swallowed) {
         /* The node itself is skipped. We only traverse the bridge endpoints.
            But wait, the hull of the subtree is:
@@ -205,9 +211,7 @@ static void print_hull(dyn_hull_node *node, FILE *stream)
 
 static void collect_hull(dyn_hull_node *node, dyn_hull_node *min_node, dyn_hull_node *max_node, FILE *stream)
 {
-    if (!node)
-        return;
-
+    
     double min_x = min_node ? min_node->x : -1e18;
     double max_x = max_node ? max_node->x : 1e18;
 
@@ -261,26 +265,30 @@ void dyn_hull_query(dyn_hull_tree *tree, FILE *stream)
     }
 }
 
-static void destroy_node(dyn_hull_node *node)
+static void destroy_node(dyn_hull_tree *tree, dyn_hull_node *node)
 {
-    if (node) {
-        destroy_node(TREAP_LEFT(node, link));
-        destroy_node(TREAP_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (TREAP_LEFT(node, link)) {
+            dyn_hull_node *l = TREAP_LEFT(node, link);
+            TREAP_LEFT(node, link) = TREAP_RIGHT(l, link);
+            TREAP_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            dyn_hull_node *r = TREAP_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void dyn_hull_destroy(dyn_hull_tree *tree)
 {
-    destroy_node(TREAP_ROOT(&tree->trt));
+    destroy_node(tree, TREAP_ROOT(&tree->trt));
     TREAP_INIT(&tree->trt);
 }
 
 static void graph_node(dyn_hull_node *node, FILE *f)
 {
-    if (!node)
-        return;
-    fprintf(f, "  \"node%p\" [fillcolor=\"#1b4f72\", label=\"{{ (%.1f, %.1f) | prio: %u } | { swallowed: %d }}\"];\n", (void *)node,
+        fprintf(f, "  \"node%p\" [fillcolor=\"#1b4f72\", label=\"{{ (%.1f, %.1f) | prio: %u } | { swallowed: %d }}\"];\n", (void *)node,
             node->x, node->y, TREAP_PRIO(node, link), node->is_swallowed);
 
     if (TREAP_LEFT(node, link)) {

@@ -10,6 +10,7 @@ typedef struct dyn_hull_node {
     struct dyn_hull_node *max_x_node;
     struct dyn_hull_node *min_x_node;
 
+    int size;
     int is_swallowed;
     struct dyn_hull_node *L_tangent;
     struct dyn_hull_node *R_tangent;
@@ -17,10 +18,11 @@ typedef struct dyn_hull_node {
 
 typedef struct dyn_hull_tree {
     TREAP_HEAD(dyn_hull_treap, dyn_hull_node) trt;
+    uint64_t prng_state[2];
 } dyn_hull_tree;
 
 void dyn_hull_init(dyn_hull_tree *tree);
-void dyn_hull_insert(dyn_hull_tree *tree, double x, double y);
+void dyn_hull_insert(dyn_hull_tree *tree, dyn_hull_node *node, double x, double y);
 void dyn_hull_remove(dyn_hull_tree *tree, double x, double y);
 void dyn_hull_destroy(dyn_hull_tree *tree);
 void dyn_hull_query(dyn_hull_tree *tree, FILE *stream);

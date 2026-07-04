@@ -1,5 +1,8 @@
 #include "incremental_hull.h"
 #include <stdlib.h>
+#include <math.h>
+
+#define EPSILON 1e-6
 
 int inc_hull_cmp(inc_hull_node *a, inc_hull_node *b)
 {
@@ -23,7 +26,7 @@ RB_GENERATE(inc_hull_rb, inc_hull_node, link, inc_hull_cmp)
 
 void inc_hull_init(inc_hull_tree *tree)
 {
-    RB_INIT(&tree->rbt);
+        RB_INIT(&tree->rbt);
 }
 
 /* Returns > 0 if left turn (CCW), < 0 if right turn (CW), 0 if collinear */
@@ -36,41 +39,36 @@ static double ccw(inc_hull_node *a, inc_hull_node *b, inc_hull_node *c)
     return ab_x * ac_y - ab_y * ac_x;
 }
 
-void inc_hull_insert(inc_hull_tree *tree, double x, double y)
+void inc_hull_insert(inc_hull_tree *tree, inc_hull_node *p, double x, double y)
 {
-    inc_hull_node *p = malloc(sizeof(*p));
-    p->x = x;
+        p->x = x;
     p->y = y;
 
     inc_hull_node *conflict = inc_hull_rb_RB_INSERT(&tree->rbt, p);
     if (conflict) {
         if (p->y > conflict->y) {
             inc_hull_rb_RB_REMOVE(&tree->rbt, conflict);
-            free(conflict);
-            inc_hull_rb_RB_INSERT(&tree->rbt, p);
+                        inc_hull_rb_RB_INSERT(&tree->rbt, p);
         } else {
-            free(p);
-            return;
+                        return;
         }
     }
 
     inc_hull_node *L = RB_PREV(inc_hull_rb, &tree->rbt, p);
     inc_hull_node *R = RB_NEXT(inc_hull_rb, &tree->rbt, p);
 
-    /* If p is swallowed by the line L->R (meaning ccw >= 0), remove p */
-    if (L && R && ccw(L, p, R) >= 0) {
+    /* If p is swallowed by the line L->R (meaning ccw > -EPSILON), remove p */
+    if (L && R && ccw(L, p, R) >= -EPSILON) {
         inc_hull_rb_RB_REMOVE(&tree->rbt, p);
-        free(p);
-        return;
+                return;
     }
 
     /* Eliminate obsolete left neighbors */
     while ((L = RB_PREV(inc_hull_rb, &tree->rbt, p)) != NULL) {
         inc_hull_node *L2 = RB_PREV(inc_hull_rb, &tree->rbt, L);
-        if (L2 && ccw(L2, L, p) >= 0) {
+        if (L2 && ccw(L2, L, p) >= -EPSILON) {
             inc_hull_rb_RB_REMOVE(&tree->rbt, L);
-            free(L);
-        } else {
+                    } else {
             break;
         }
     }
@@ -78,35 +76,38 @@ void inc_hull_insert(inc_hull_tree *tree, double x, double y)
     /* Eliminate obsolete right neighbors */
     while ((R = RB_NEXT(inc_hull_rb, &tree->rbt, p)) != NULL) {
         inc_hull_node *R2 = RB_NEXT(inc_hull_rb, &tree->rbt, R);
-        if (R2 && ccw(p, R, R2) >= 0) {
+        if (R2 && ccw(p, R, R2) >= -EPSILON) {
             inc_hull_rb_RB_REMOVE(&tree->rbt, R);
-            free(R);
-        } else {
+                    } else {
             break;
         }
     }
 }
 
-static void destroy_node(inc_hull_node *node)
+static void destroy_node(inc_hull_tree *tree, inc_hull_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            inc_hull_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            inc_hull_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void inc_hull_destroy(inc_hull_tree *tree)
 {
-    destroy_node(RB_ROOT(&tree->rbt));
+    destroy_node(tree, RB_ROOT(&tree->rbt));
     RB_INIT(&tree->rbt);
 }
 
 static void graph_node(inc_hull_node *node, FILE *f)
 {
-    if (!node)
-        return;
-    fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"(%.1f, %.1f)\"];\n", (void *)node,
+        fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"(%.1f, %.1f)\"];\n", (void *)node,
             RB_COLOR(node, link) == RB_BLACK ? "#000000" : "#aa0000", node->x, node->y);
     if (RB_LEFT(node, link)) {
         fprintf(f, "  \"node%p\" -> \"node%p\" [label=\"L\"];\n", (void *)node, (void *)RB_LEFT(node, link));

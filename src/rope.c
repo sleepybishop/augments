@@ -1,12 +1,12 @@
 #include "rope.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "prng.h"
+#include <string.h>
 
 static void rope_augment(rope_node *node)
 {
-    if (!node)
-        return;
-    node->size = 1;
+        node->size = 1;
     if (TREAP_LEFT(node, link))
         node->size += TREAP_LEFT(node, link)->size;
     if (TREAP_RIGHT(node, link))
@@ -70,31 +70,20 @@ static void rope_split(rope_node *node, size_t k, rope_node **l, rope_node **r)
 
 void rope_init(rope *rope)
 {
-    TREAP_INIT(&rope->trt);
+    if (!rope)
+        return;
+        TREAP_INIT(&rope->trt);
+    uint64_t seed = 0x123456789ULL;
+    rope->prng_state[0] = splitmix64(&seed);
+    rope->prng_state[1] = splitmix64(&seed);
 }
 
-static uint32_t fast_rand(void)
+int rope_insert(rope *rope, rope_node *node, size_t index, char val)
 {
-    static uint32_t x = 123456789;
-    static uint32_t y = 362436069;
-    static uint32_t z = 521288629;
-    static uint32_t w = 88675123;
-    uint32_t t = x ^ (x << 11);
-    x = y;
-    y = z;
-    z = w;
-    return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-}
-
-int rope_insert(rope *rope, size_t index, char val)
-{
-    rope_node *node = malloc(sizeof(*node));
-    if (!node)
-        return -1;
-    node->val = val;
+            node->val = val;
     node->size = 1;
     TREAP_LEFT(node, link) = TREAP_RIGHT(node, link) = TREAP_PARENT(node, link) = NULL;
-    TREAP_PRIO(node, link) = fast_rand();
+    TREAP_PRIO(node, link) = next_xoroshiro(rope->prng_state);
 
     rope_node *l = NULL, *r = NULL;
     rope_split(TREAP_ROOT(&rope->trt), index, &l, &r);
@@ -125,8 +114,7 @@ int rope_remove(rope *rope, size_t index)
     if (merged)
         TREAP_PARENT(merged, link) = NULL;
 
-    free(mid);
-    return 0;
+        return 0;
 }
 
 char rope_query(rope *rope, size_t index)
@@ -149,28 +137,32 @@ char rope_query(rope *rope, size_t index)
     return '\0';
 }
 
-static void destroy_node(rope_node *node)
+static void destroy_node(rope *rope, rope_node *node)
 {
-    if (node) {
-        destroy_node(TREAP_LEFT(node, link));
-        destroy_node(TREAP_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (TREAP_LEFT(node, link)) {
+            rope_node *l = TREAP_LEFT(node, link);
+            TREAP_LEFT(node, link) = TREAP_RIGHT(l, link);
+            TREAP_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            rope_node *r = TREAP_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void rope_destroy(rope *rope)
 {
     if (rope) {
-        destroy_node(TREAP_ROOT(&rope->trt));
+        destroy_node(rope, TREAP_ROOT(&rope->trt));
         TREAP_INIT(&rope->trt);
     }
 }
 
 static void graph_node(rope_node *node, FILE *f)
 {
-    if (!node)
-        return;
-    fprintf(f, "  \"node%p\" [fillcolor=\"#1b4f72\", label=\"{{ val: '%c' | prio: %u } | { size: %zu }}\"];\n", (void *)node,
+        fprintf(f, "  \"node%p\" [fillcolor=\"#1b4f72\", label=\"{{ val: '%c' | prio: %u } | { size: %zu }}\"];\n", (void *)node,
             node->val, TREAP_PRIO(node, link), node->size);
 
     if (TREAP_LEFT(node, link)) {

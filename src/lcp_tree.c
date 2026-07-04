@@ -51,31 +51,25 @@ RB_GENERATE(_LCP, lcp_node, link, lcp_cmp)
 
 void lcp_tree_init(lcp_tree *tree)
 {
-    RB_INIT(&tree->rbt);
+    if (!tree)
+        return;
+        RB_INIT(&tree->rbt);
 }
 
-int lcp_tree_add(lcp_tree *tree, const char *str)
+int lcp_tree_add(lcp_tree *tree, lcp_node *node, const char *str)
 {
-    lcp_node *node = malloc(sizeof(*node));
-    if (!node)
+    if (!tree || !str)
         return -1;
-    node->str = malloc(strlen(str) + 1);
-    if (!node->str) {
-        free(node);
-        return -1;
-    }
-    strcpy(node->str, str);
-    node->min_str = node->str;
+            node->str = (char *)str;
+            node->min_str = node->str;
     node->max_str = node->str;
     node->lcp = strlen(str);
 
-    lcp_node *res = RB_INSERT(_LCP, &tree->rbt, node);
-    if (res) {
-        free(node->str);
-        free(node);
-        return 0;
+    lcp_node *f = RB_INSERT(_LCP, &tree->rbt, node);
+    if (f) {
+                        return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 int lcp_tree_remove(lcp_tree *tree, const char *str)
@@ -86,8 +80,7 @@ int lcp_tree_remove(lcp_tree *tree, const char *str)
     if (node) {
         RB_REMOVE(_LCP, &tree->rbt, node);
         free(node->str);
-        free(node);
-        return 1;
+                return 1;
     }
     return 0;
 }
@@ -98,29 +91,32 @@ size_t lcp_tree_query(lcp_tree *tree)
     return root ? root->lcp : 0;
 }
 
-static void destroy_node(lcp_node *node)
+static void destroy_node(lcp_tree *tree, lcp_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node->str);
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            lcp_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            lcp_node *r = RB_RIGHT(node, link);
+                                    node = r;
+        }
     }
 }
 
 void lcp_tree_destroy(lcp_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }
 
 static void graph_node(lcp_node *node, FILE *f)
 {
-    if (!node)
-        return;
-    fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"{{ str: '%s' | lcp: %zu } | { min: '%s' | max: '%s' }}\"];\n", (void *)node,
+        fprintf(f, "  \"node%p\" [fillcolor=\"%s\", label=\"{{ str: '%s' | lcp: %zu } | { min: '%s' | max: '%s' }}\"];\n", (void *)node,
             RB_COLOR(node, link) == RB_BLACK ? "#000000" : "#aa0000", node->str, node->lcp, node->min_str, node->max_str);
 
     if (RB_LEFT(node, link)) {

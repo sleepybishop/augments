@@ -24,7 +24,7 @@ typedef struct {
 } itree;
 
 void interval_tree_init(itree *tree);
-int interval_tree_add(itree *tree, size_t low, size_t high, size_t id);
+int interval_tree_add(itree *tree, itree_node *node, size_t low, size_t high, size_t id);
 int interval_tree_remove(itree *tree, size_t low, size_t high, size_t id);
 /* Callback returns 0 to continue search, non-zero to stop */
 typedef int (*itree_cb)(itree_node *node, void *arg);

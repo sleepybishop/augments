@@ -14,10 +14,11 @@ typedef struct rope_node {
 
 typedef struct rope {
     TREAP_HEAD(rope_treap, rope_node) trt;
+    uint64_t prng_state[2];
 } rope;
 
 void rope_init(rope *rope);
-int rope_insert(rope *rope, size_t index, char val);
+int rope_insert(rope *rope, rope_node *node, size_t index, char val);
 int rope_remove(rope *rope, size_t index);
 char rope_query(rope *rope, size_t index);
 void rope_destroy(rope *rope);

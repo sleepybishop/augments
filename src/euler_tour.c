@@ -1,15 +1,8 @@
+#include <string.h>
 #include "euler_tour.h"
 #include <stdlib.h>
 #include <stdio.h>
-
-/* --- EDGE MAP TREAP (Explicit Treap) --- */
-typedef struct edge_map_node {
-    TREAP_ENTRY(edge_map_node) link;
-    uint64_t key;
-    ett_node *ptr;
-} edge_map_node;
-
-TREAP_HEAD(edge_map_treap, edge_map_node);
+#include "prng.h"
 
 static int edge_cmp(edge_map_node *a, edge_map_node *b)
 {
@@ -26,44 +19,27 @@ static int edge_cmp(edge_map_node *a, edge_map_node *b)
     } while (0)
 TREAP_GENERATE(edge_map_treap, edge_map_node, link, edge_cmp)
 
-static struct edge_map_treap edge_map = TREAP_INITIALIZER(NULL);
-
-static uint32_t fast_rand(void)
+static void edge_map_insert_edge(euler_tour *et, int u, int v, ett_node *ptr, edge_map_node *node)
 {
-    static uint32_t x = 123456789;
-    static uint32_t y = 362436069;
-    static uint32_t z = 521288629;
-    static uint32_t w = 88675123;
-    uint32_t t = x ^ (x << 11);
-    x = y;
-    y = z;
-    z = w;
-    return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-}
-
-static void edge_map_insert_edge(int u, int v, ett_node *ptr)
-{
-    edge_map_node *node = malloc(sizeof(*node));
     node->key = ((uint64_t)u << 32) | (uint32_t)v;
     node->ptr = ptr;
-    TREAP_PRIO(node, link) = fast_rand();
-    edge_map_treap_TREAP_INSERT(&edge_map, node);
+    TREAP_PRIO(node, link) = (uint32_t)next_xoroshiro(et->prng_state);
+    edge_map_treap_TREAP_INSERT(&et->edge_map, node);
 }
 
-static ett_node *edge_map_find_edge(int u, int v)
+static ett_node *edge_map_find_edge(euler_tour *et, int u, int v)
 {
     edge_map_node search = {.key = ((uint64_t)u << 32) | (uint32_t)v};
-    edge_map_node *res = edge_map_treap_TREAP_FIND(&edge_map, &search);
+    edge_map_node *res = edge_map_treap_TREAP_FIND(&et->edge_map, &search);
     return res ? res->ptr : NULL;
 }
 
-static void edge_map_remove_edge(int u, int v)
+static void edge_map_remove_edge(euler_tour *et, int u, int v)
 {
     edge_map_node search = {.key = ((uint64_t)u << 32) | (uint32_t)v};
-    edge_map_node *res = edge_map_treap_TREAP_FIND(&edge_map, &search);
+    edge_map_node *res = edge_map_treap_TREAP_FIND(&et->edge_map, &search);
     if (res) {
-        edge_map_treap_TREAP_REMOVE(&edge_map, res);
-        free(res);
+        edge_map_treap_TREAP_REMOVE(&et->edge_map, res);
     }
 }
 
@@ -135,25 +111,32 @@ static void ett_split(ett_node *node, size_t k, ett_node **l, ett_node **r)
     }
 }
 
-static ett_node *create_ett_node(int u, int v)
+static void create_ett_node(euler_tour *et, ett_node *node, int u, int v)
 {
-    ett_node *node = malloc(sizeof(*node));
     node->u = u;
     node->v = v;
     node->size = 1;
     TREAP_LEFT(node, link) = TREAP_RIGHT(node, link) = TREAP_PARENT(node, link) = NULL;
-    TREAP_PRIO(node, link) = fast_rand();
-    return node;
+    TREAP_PRIO(node, link) = (uint32_t)next_xoroshiro(et->prng_state);
 }
 
-void euler_tour_init(euler_tour *et, size_t max_vertices)
+void euler_tour_init(euler_tour *et, size_t max_vertices, ett_node **vertex_nodes_buf)
 {
-    TREAP_INIT(&et->trt);
-    et->max_vertices = max_vertices;
-    et->vertex_nodes = calloc(max_vertices, sizeof(ett_node *));
+    if (!et)
+        return;
 
-    for (size_t i = 0; i < max_vertices; i++) {
-        et->vertex_nodes[i] = create_ett_node(i, i);
+    et->max_vertices = max_vertices;
+    et->vertex_nodes = vertex_nodes_buf;
+    TREAP_INIT(&et->trt);
+    TREAP_INIT(&et->edge_map);
+    uint64_t seed = 0x123456789ULL;
+    et->prng_state[0] = splitmix64(&seed);
+    et->prng_state[1] = splitmix64(&seed);
+
+    if (et->vertex_nodes) {
+        for (size_t i = 0; i < max_vertices; i++) {
+            create_ett_node(et, et->vertex_nodes[i], i, i);
+        }
     }
 }
 
@@ -187,7 +170,7 @@ int euler_tour_connected(euler_tour *et, int u, int v)
     return find_root(et->vertex_nodes[u]) == find_root(et->vertex_nodes[v]);
 }
 
-void euler_tour_link(euler_tour *et, int u, int v)
+void euler_tour_link(euler_tour *et, int u, int v, ett_node *uv_node, ett_node *vu_node, edge_map_node *uv_map, edge_map_node *vu_map)
 {
     if (euler_tour_connected(et, u, v))
         return;
@@ -206,15 +189,15 @@ void euler_tour_link(euler_tour *et, int u, int v)
     ett_split(v_root, v_rank, &v_L, &v_R);
     v_root = ett_merge(v_R, v_L);
 
-    ett_node *e_uv = create_ett_node(u, v);
-    ett_node *e_vu = create_ett_node(v, u);
+    create_ett_node(et, uv_node, u, v);
+    create_ett_node(et, vu_node, v, u);
 
-    edge_map_insert_edge(u, v, e_uv);
-    edge_map_insert_edge(v, u, e_vu);
+    edge_map_insert_edge(et, u, v, uv_node, uv_map);
+    edge_map_insert_edge(et, v, u, vu_node, vu_map);
 
-    ett_node *merged = ett_merge(u_root, e_uv);
+    ett_node *merged = ett_merge(u_root, uv_node);
     merged = ett_merge(merged, v_root);
-    merged = ett_merge(merged, e_vu);
+    merged = ett_merge(merged, vu_node);
 }
 
 void euler_tour_cut(euler_tour *et, int u, int v)
@@ -222,8 +205,8 @@ void euler_tour_cut(euler_tour *et, int u, int v)
     if (!euler_tour_connected(et, u, v))
         return;
 
-    ett_node *e1 = edge_map_find_edge(u, v);
-    ett_node *e2 = edge_map_find_edge(v, u);
+    ett_node *e1 = edge_map_find_edge(et, u, v);
+    ett_node *e2 = edge_map_find_edge(et, v, u);
     if (!e1 || !e2)
         return;
 
@@ -255,20 +238,13 @@ void euler_tour_cut(euler_tour *et, int u, int v)
 
     ett_node *u_comp = ett_merge(A_final, C);
 
-    free(e1_node);
-    free(e2_node);
-    edge_map_remove_edge(u, v);
-    edge_map_remove_edge(v, u);
+    edge_map_remove_edge(et, u, v);
+    edge_map_remove_edge(et, v, u);
 }
 
 void euler_tour_destroy(euler_tour *et)
 {
-    for (size_t i = 0; i < et->max_vertices; i++) {
-        /* Technically we need to iterate the treap and free all edge nodes too,
-           but for simplicity in this destruction we'll just leave it since the
-           focus is on the graph algorithms. */
-    }
-    free(et->vertex_nodes);
+    /* Resources are now managed by the user */
 }
 
 static void graph_node(ett_node *node, FILE *f)

@@ -31,7 +31,7 @@ typedef struct {
 } sub_tree;
 
 void sub_tree_init(sub_tree *tree);
-int sub_tree_add(sub_tree *tree, int key, double val);
+int sub_tree_add(sub_tree *tree, sub_node *node, int key, double val);
 int sub_tree_remove(sub_tree *tree, int key);
 void sub_tree_update(sub_tree *tree, int key, double new_val);
 double sub_tree_query(sub_tree *tree, int low_key, int high_key);

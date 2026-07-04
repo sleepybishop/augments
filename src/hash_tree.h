@@ -28,7 +28,7 @@ typedef struct hash_tree_tree {
 } hash_tree_tree;
 
 void hash_tree_init(hash_tree_tree *tree);
-int hash_tree_insert(hash_tree_tree *tree, size_t key, char val);
+int hash_tree_insert(hash_tree_tree *tree, hash_tree_node *node, size_t key, char val);
 int hash_tree_remove(hash_tree_tree *tree, size_t key);
 hash_tree_node *hash_tree_find(hash_tree_tree *tree, size_t key);
 uint64_t hash_tree_hash(hash_tree_tree *tree);

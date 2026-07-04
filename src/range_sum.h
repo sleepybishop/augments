@@ -23,7 +23,7 @@ typedef struct {
 } sum_tree;
 
 void sum_tree_init(sum_tree *tree);
-int sum_tree_add(sum_tree *tree, int key, double val);
+int sum_tree_add(sum_tree *tree, sum_node *node, int key, double val);
 int sum_tree_remove(sum_tree *tree, int key);
 void sum_tree_update(sum_tree *tree, int key, double new_val);
 double sum_tree_query(sum_tree *tree, int low_key, int high_key);

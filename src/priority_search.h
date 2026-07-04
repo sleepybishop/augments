@@ -26,7 +26,7 @@ typedef struct {
 } ps_tree;
 
 void ps_tree_init(ps_tree *tree);
-int ps_tree_add(ps_tree *tree, double x, double y);
+int ps_tree_add(ps_tree *tree, ps_node *node, double x, double y);
 int ps_tree_remove(ps_tree *tree, double x, double y);
 typedef void (*ps_cb)(ps_node *node, void *arg);
 void ps_tree_query(ps_tree *tree, double x_min, double x_max, double y_min, ps_cb cb, void *arg);

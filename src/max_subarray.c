@@ -1,7 +1,10 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "max_subarray.h"
+
+#define EPSILON 1e-6
 
 #ifndef INFINITY
 #define INFINITY (1.0 / 0.0)
@@ -67,7 +70,8 @@ static void augment_node(sub_node *node)
         node->max_sub = max_s;
 
         /* Stop propagating early if all augmented values are unchanged */
-        if (node->sum == old_sum && node->max_prefix == old_pref && node->max_suffix == old_suff && node->max_sub == old_sub) {
+        if (fabs(node->sum - old_sum) < EPSILON && fabs(node->max_prefix - old_pref) < EPSILON &&
+            fabs(node->max_suffix - old_suff) < EPSILON && fabs(node->max_sub - old_sub) < EPSILON) {
             break;
         }
 
@@ -81,14 +85,16 @@ RB_GENERATE(_SUB_TREE, sub_node, link, node_cmp);
 
 void sub_tree_init(sub_tree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static sub_node *create_node(int key, double val)
+static void create_node(sub_node *n,  int key, double val)
 {
-    sub_node *n = (sub_node *)calloc(1, sizeof(sub_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->key = key;
         n->val = val;
@@ -97,29 +103,25 @@ static sub_node *create_node(int key, double val)
         n->max_suffix = val;
         n->max_sub = val;
     }
-    return n;
-}
+    }
 
-int sub_tree_add(sub_tree *tree, int key, double val)
+int sub_tree_add(sub_tree *tree, sub_node *n, int key, double val)
 {
     if (!tree)
-        return 0;
-    sub_node *n = create_node(key, val);
+        return -1;
+    create_node(n, key, val);
     if (!n)
-        return 0;
+        return -1;
     sub_node *f = RB_INSERT(_SUB_TREE, &tree->rbt, n);
     if (f) {
-        free(n);
-        return 0; /* Duplicate */
+                return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 sub_node *sub_tree_find(sub_tree *tree, int key)
 {
-    if (!tree)
-        return NULL;
-    sub_node temp = {.key = key};
+        sub_node temp = {.key = key};
     return RB_FIND(_SUB_TREE, &tree->rbt, &temp);
 }
 
@@ -131,8 +133,7 @@ int sub_tree_remove(sub_tree *tree, int key)
     if (!n)
         return 0;
     RB_REMOVE(_SUB_TREE, &tree->rbt, n);
-    free(n);
-    return 1;
+        return 1;
 }
 
 void sub_tree_update(sub_tree *tree, int key, double new_val)
@@ -275,19 +276,25 @@ double sub_tree_query(sub_tree *tree, int low_key, int high_key)
     return res.max_sub;
 }
 
-static void destroy_node(sub_node *node)
+static void destroy_node(sub_tree *tree, sub_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            sub_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            sub_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void sub_tree_destroy(sub_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }

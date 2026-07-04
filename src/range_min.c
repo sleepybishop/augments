@@ -1,6 +1,9 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+#define EPSILON 1e-6
 #include "range_min.h"
 
 #ifndef INFINITY
@@ -30,7 +33,7 @@ static void augment_node(min_node *node)
             node->min_val = r->min_val;
 
         /* Stop propagating early if the min didn't change */
-        if (node->min_val == old_min)
+        if (fabs(node->min_val - old_min) < EPSILON)
             break;
 
         node = RB_PARENT(node, link);
@@ -43,42 +46,40 @@ RB_GENERATE(_MIN_TREE, min_node, link, node_cmp);
 
 void min_tree_init(min_tree *tree)
 {
-    if (tree) {
+    if (!tree)
+        return;
+        if (tree) {
         RB_INIT(&tree->rbt);
     }
 }
 
-static min_node *create_node(int key, double val)
+static void create_node(min_node *n,  int key, double val)
 {
-    min_node *n = (min_node *)calloc(1, sizeof(min_node));
+        memset(n, 0, sizeof(*n));
     if (n) {
         n->key = key;
         n->val = val;
         n->min_val = val;
     }
-    return n;
-}
+    }
 
-int min_tree_add(min_tree *tree, int key, double val)
+int min_tree_add(min_tree *tree, min_node *n, int key, double val)
 {
     if (!tree)
-        return 0;
-    min_node *n = create_node(key, val);
+        return -1;
+    create_node(n, key, val);
     if (!n)
-        return 0;
+        return -1;
     min_node *f = RB_INSERT(_MIN_TREE, &tree->rbt, n);
     if (f) {
-        free(n);
-        return 0; /* Duplicate */
+                return 1; /* Duplicate */
     }
-    return 1;
+    return 0;
 }
 
 min_node *min_tree_find(min_tree *tree, int key)
 {
-    if (!tree)
-        return NULL;
-    min_node temp = {.key = key};
+        min_node temp = {.key = key};
     return RB_FIND(_MIN_TREE, &tree->rbt, &temp);
 }
 
@@ -90,8 +91,7 @@ int min_tree_remove(min_tree *tree, int key)
     if (!n)
         return 0;
     RB_REMOVE(_MIN_TREE, &tree->rbt, n);
-    free(n);
-    return 1;
+        return 1;
 }
 
 void min_tree_update(min_tree *tree, int key, double new_val)
@@ -142,19 +142,25 @@ double min_tree_query(min_tree *tree, int low_key, int high_key)
     return min_query_helper(RB_ROOT(&tree->rbt), low_key, high_key, -INFINITY, INFINITY);
 }
 
-static void destroy_node(min_node *node)
+static void destroy_node(min_tree *tree, min_node *node)
 {
-    if (node) {
-        destroy_node(RB_LEFT(node, link));
-        destroy_node(RB_RIGHT(node, link));
-        free(node);
+    while (node) {
+        if (RB_LEFT(node, link)) {
+            min_node *l = RB_LEFT(node, link);
+            RB_LEFT(node, link) = RB_RIGHT(l, link);
+            RB_RIGHT(l, link) = node;
+            node = l;
+        } else {
+            min_node *r = RB_RIGHT(node, link);
+                        node = r;
+        }
     }
 }
 
 void min_tree_destroy(min_tree *tree)
 {
     if (tree) {
-        destroy_node(RB_ROOT(&tree->rbt));
+        destroy_node(tree, RB_ROOT(&tree->rbt));
         RB_INIT(&tree->rbt);
     }
 }
