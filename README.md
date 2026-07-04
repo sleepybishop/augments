@@ -1,6 +1,6 @@
 # Augmented Search Trees
 
-[#CI](https://github.com/sleepybishop/interval_trees/actions/workflows/ci.yml)
+[![CI](https://github.com/sleepybishop/augments/actions/workflows/ci.yml/badge.svg)](https://github.com/sleepybishop/augments/actions/workflows/ci.yml)
 
 Augmenting a small dependable data structure with logic to address a more complex use case is a pattern I've used to great effect in my career.
 It's a relic from a different time now that you can pull libraries with every corner of the internet via a package manager.
