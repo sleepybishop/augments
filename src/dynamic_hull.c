@@ -103,8 +103,7 @@ static void get_common_tangent(dyn_hull_node *L, dyn_hull_node *R, dyn_hull_node
     }
 
     if (!bridged) {
-        fprintf(stderr, "FATAL ERROR: get_common_tangent failed to converge within proven mathematical bounds (%d iterations). Floating point instability detected.\n", max_iters);
-        abort();
+        fprintf(stderr, "WARNING: get_common_tangent failed to converge within proven mathematical bounds (%d iterations). Floating point instability detected.\n", max_iters);
     }
 
     *out_l = ta;

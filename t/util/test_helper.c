@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,21 @@ static void ps_print_cb(ps_node *node, void *arg)
     printf("%.2f|%.2f\n", node->x, node->y);
 }
 
+
+itree_node it_nodes_buf[10000]; int it_nodes_idx = 0;
+os_node os_nodes_buf[10000]; int os_nodes_idx = 0;
+sum_node sum_nodes_buf[10000]; int sum_nodes_idx = 0;
+min_node min_nodes_buf[10000]; int min_nodes_idx = 0;
+ps_node ps_nodes_buf[10000]; int ps_nodes_idx = 0;
+sub_node sub_nodes_buf[10000]; int sub_nodes_idx = 0;
+hash_tree_node ht_nodes_buf[10000]; int ht_nodes_idx = 0;
+lcp_node lcp_nodes_buf[10000]; int lcp_nodes_idx = 0;
+rope_node rope_nodes_buf[10000]; int rope_nodes_idx = 0;
+inc_hull_node inc_nodes_buf[10000]; int inc_nodes_idx = 0;
+dyn_hull_node dyn_nodes_buf[10000]; int dyn_nodes_idx = 0;
+ett_node ett_nodes_buf[10000]; int ett_nodes_idx = 0;
+edge_map_node edge_map_buf[10000]; int edge_map_idx = 0;
+
 int main(int argc, char *argv[])
 {
     itree it;
@@ -49,7 +65,9 @@ int main(int argc, char *argv[])
     hash_tree_init(&ht);
     lcp_tree_init(&lcpt);
     rope_init(&tropt);
-    euler_tour_init(&ett, 1000);
+    static ett_node *ett_nodes[1000];
+    for (int i=0; i<1000; i++) ett_nodes[i] = &ett_nodes_buf[ett_nodes_idx++];
+    euler_tour_init(&ett, 1000, ett_nodes);
     inc_hull_init(&iht);
     dyn_hull_init(&dht);
 
@@ -65,7 +83,7 @@ int main(int argc, char *argv[])
         if (strncmp(buf, "ITREE ADD ", 10) == 0) {
             size_t id, low, high;
             if (sscanf(buf + 10, "%zu|%zu|%zu", &id, &low, &high) == 3) {
-                interval_tree_add(&it, low, high, id);
+                interval_tree_add(&it, &it_nodes_buf[it_nodes_idx++], low, high, id);
             }
         } else if (strncmp(buf, "ITREE REMOVE ", 13) == 0) {
             size_t low, high, id;
@@ -84,7 +102,7 @@ int main(int argc, char *argv[])
         else if (strncmp(buf, "OSTREE ADD ", 11) == 0) {
             int key;
             if (sscanf(buf + 11, "%d", &key) == 1) {
-                os_tree_add(&ost, key);
+                os_tree_add(&ost, &os_nodes_buf[os_nodes_idx++], key);
             }
         } else if (strncmp(buf, "OSTREE REMOVE ", 14) == 0) {
             int key;
@@ -118,7 +136,7 @@ int main(int argc, char *argv[])
             int key;
             double val;
             if (sscanf(buf + 12, "%d|%lf", &key, &val) == 2) {
-                sum_tree_add(&st, key, val);
+                sum_tree_add(&st, &sum_nodes_buf[sum_nodes_idx++], key, val);
             }
         } else if (strncmp(buf, "SUMTREE REMOVE ", 15) == 0) {
             int key;
@@ -143,7 +161,7 @@ int main(int argc, char *argv[])
             int key;
             double val;
             if (sscanf(buf + 12, "%d|%lf", &key, &val) == 2) {
-                min_tree_add(&mt, key, val);
+                min_tree_add(&mt, &min_nodes_buf[min_nodes_idx++], key, val);
             }
         } else if (strncmp(buf, "MINTREE REMOVE ", 15) == 0) {
             int key;
@@ -172,7 +190,7 @@ int main(int argc, char *argv[])
         else if (strncmp(buf, "PSTREE ADD ", 11) == 0) {
             double x, y;
             if (sscanf(buf + 11, "%lf|%lf", &x, &y) == 2) {
-                ps_tree_add(&pst, x, y);
+                ps_tree_add(&pst, &ps_nodes_buf[ps_nodes_idx++], x, y);
             }
         } else if (strncmp(buf, "PSTREE REMOVE ", 14) == 0) {
             double x, y;
@@ -191,7 +209,7 @@ int main(int argc, char *argv[])
             int key;
             double val;
             if (sscanf(buf + 11, "%d|%lf", &key, &val) == 2) {
-                sub_tree_add(&subt, key, val);
+                sub_tree_add(&subt, &sub_nodes_buf[sub_nodes_idx++], key, val);
             }
         } else if (strncmp(buf, "MAXSUB REMOVE ", 14) == 0) {
             int key;
@@ -216,7 +234,7 @@ int main(int argc, char *argv[])
             size_t key;
             char val;
             if (sscanf(buf + 13, "%zu|%c", &key, &val) == 2) {
-                hash_tree_insert(&ht, key, val);
+                hash_tree_insert(&ht, &ht_nodes_buf[ht_nodes_idx++], key, val);
             }
         } else if (strncmp(buf, "HASHTREE REMOVE ", 16) == 0) {
             size_t key;
@@ -229,7 +247,7 @@ int main(int argc, char *argv[])
 
         /* 8. LCP Commands */
         else if (strncmp(buf, "LCP ADD ", 8) == 0) {
-            lcp_tree_add(&lcpt, buf + 8);
+            lcp_tree_add(&lcpt, &lcp_nodes_buf[lcp_nodes_idx++], strdup(buf + 8));
         } else if (strncmp(buf, "LCP REMOVE ", 11) == 0) {
             lcp_tree_remove(&lcpt, buf + 11);
         } else if (strcmp(buf, "LCP QUERY") == 0) {
@@ -241,7 +259,7 @@ int main(int argc, char *argv[])
             size_t idx;
             char val;
             if (sscanf(buf + 9, "%zu|%c", &idx, &val) == 2) {
-                rope_insert(&tropt, idx, val);
+                rope_insert(&tropt, &rope_nodes_buf[rope_nodes_idx++], idx, val);
             }
         } else if (strncmp(buf, "ROPE REMOVE ", 12) == 0) {
             size_t idx;
@@ -264,7 +282,11 @@ int main(int argc, char *argv[])
         else if (strncmp(buf, "EULER LINK ", 11) == 0) {
             int u, v;
             if (sscanf(buf + 11, "%d %d", &u, &v) == 2) {
-                euler_tour_link(&ett, u, v);
+                int i1 = ett_nodes_idx++;
+                int i2 = ett_nodes_idx++;
+                int j1 = edge_map_idx++;
+                int j2 = edge_map_idx++;
+                euler_tour_link(&ett, u, v, &ett_nodes_buf[i1], &ett_nodes_buf[i2], &edge_map_buf[j1], &edge_map_buf[j2]);
             }
         } else if (strncmp(buf, "EULER CUT ", 10) == 0) {
             int u, v;
@@ -282,7 +304,7 @@ int main(int argc, char *argv[])
         else if (strncmp(buf, "INCHULL ADD ", 12) == 0) {
             double x, y;
             if (sscanf(buf + 12, "%lf %lf", &x, &y) == 2) {
-                inc_hull_insert(&iht, x, y);
+                inc_hull_insert(&iht, &inc_nodes_buf[inc_nodes_idx++], x, y);
             }
         } else if (strcmp(buf, "INCHULL QUERY") == 0) {
             inc_hull_node *curr;
@@ -296,7 +318,7 @@ int main(int argc, char *argv[])
         else if (strncmp(buf, "DYNHULL ADD ", 12) == 0) {
             double x, y;
             if (sscanf(buf + 12, "%lf %lf", &x, &y) == 2) {
-                dyn_hull_insert(&dht, x, y);
+                dyn_hull_insert(&dht, &dyn_nodes_buf[dyn_nodes_idx++], x, y);
             }
         } else if (strncmp(buf, "DYNHULL REMOVE ", 15) == 0) {
             double x, y;
@@ -345,7 +367,6 @@ int main(int argc, char *argv[])
     hash_tree_destroy(&ht);
     lcp_tree_destroy(&lcpt);
     rope_destroy(&tropt);
-    euler_tour_destroy(&ett);
     inc_hull_destroy(&iht);
     dyn_hull_destroy(&dht);
 

@@ -79,7 +79,6 @@ int lcp_tree_remove(lcp_tree *tree, const char *str)
     lcp_node *node = RB_FIND(_LCP, &tree->rbt, &search);
     if (node) {
         RB_REMOVE(_LCP, &tree->rbt, node);
-        free(node->str);
                 return 1;
     }
     return 0;
